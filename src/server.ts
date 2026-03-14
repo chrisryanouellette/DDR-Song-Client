@@ -125,7 +125,18 @@ app.get<{ id: string }, SongDetails, never, never>(
             ? "custom"
             : "unknown";
 
-    return res.json({ bpm, quality: { audio, banner, background } });
+    const previewElem = $(other).find("iframe");
+    const previewSrc = previewElem.attr("src");
+    const preview = previewSrc?.includes("www.youtube.com")
+      ? previewSrc
+      : undefined;
+
+    return res.json({
+      bpm,
+      preview,
+      id: params.data.id,
+      quality: { audio, banner, background },
+    });
   },
 );
 

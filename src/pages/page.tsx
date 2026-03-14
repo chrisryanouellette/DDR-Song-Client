@@ -1,26 +1,22 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  RiDownload2Line,
-  RiEyeLine,
-  RiImage2Line,
-  RiLoader2Fill,
-  RiMusic2Line,
-  RiVideoLine,
-} from "@remixicon/react";
-import { Suspense, startTransition, useActionState } from "react";
+import { RiDownload2Line, RiLoader2Fill } from "@remixicon/react";
+import { Suspense, startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import SongCard from "../components/Cards/Songs";
+import Dialog from "../components/Dialog";
 import Difficulty from "../components/Song/Difficulty";
 import { searchSchema } from "../schema";
 import type { SearchSong } from "../types";
 import { Bpm, BpmFallback } from "./components/Bpm";
+import { Grade } from "./components/Grade";
+import { Preview, PreviewFallback } from "./components/Prewiew";
 import { Quality, QualityFallback } from "./components/Quality";
 import { SongDetailsProvider } from "./context/Song";
 
 type SearchInputs = z.infer<typeof searchSchema>;
 
-async function searchAction(prev: SearchSong[] | null, data: SearchInputs) {
+async function searchAction(_: SearchSong[] | null, data: SearchInputs) {
   window.scrollTo({ top: 0, behavior: "smooth" });
   const url = new URL(`${window.location.origin}/api/search`);
   if ("songtitle" in data) {
@@ -45,6 +41,7 @@ function IndexPage() {
   } = useForm<SearchInputs>({
     resolver: zodResolver(searchSchema),
   });
+  const [preview, setPreview] = useState<string | null>(null);
 
   const [search, action, isPending] = useActionState(searchAction, null);
 
@@ -120,13 +117,13 @@ function IndexPage() {
             "Search"
           )}
         </button>
-        {errors.songtitle || errors.songartist ? (
+        {"songtitle" in errors || "songartist" in errors ? (
           <p className="mt-1 basis-full text-red-500 text-sm">
             {errors.songtitle?.message || errors.songartist?.message}
           </p>
         ) : null}
       </form>
-      {!search?.length ? (
+      {search === null ? null : !search?.length ? (
         <img
           src="no-song.png"
           alt="no songs found in search"
@@ -145,16 +142,21 @@ function IndexPage() {
                   >
                     {song.title}
                   </button>
-                  <RiEyeLine className="mt-1 ml-auto shrink-0 animate-pulse pressed:fill-purple-500 text-gray-700 transition-colors hover:fill-purple-500" />
+                  <Suspense fallback={<PreviewFallback />}>
+                    <Preview onClickPreview={setPreview} />
+                  </Suspense>
                   <button
                     type="button"
                     className="mt-1 h-min shrink-0 cursor-pointer"
                   >
                     <RiDownload2Line className="pressed:fill-purple-500 transition-colors hover:fill-purple-500" />
                   </button>
+                  <Suspense>
+                    <Grade single={song.single} double={song.double} />
+                  </Suspense>
                 </SongCard.Title>
                 <SongCard.SubTitle>
-                  <ul className="flex flex-wrap gap-x-2">
+                  <ul className="flex flex-wrap gap-x-2 pr-10">
                     {song.artist.map((artist) => (
                       <li
                         key={artist}
@@ -162,7 +164,7 @@ function IndexPage() {
                       >
                         <button
                           type="button"
-                          className="cursor-pointer pressed:text-purple-600 transition-colors hover:text-purple-500 active:text-purple-600"
+                          className="cursor-pointer text-left pressed:text-purple-600 transition-colors hover:text-purple-500 active:text-purple-600"
                           onClick={() => handleSelectArtist(artist)}
                         >
                           {artist}
@@ -171,7 +173,7 @@ function IndexPage() {
                     ))}
                   </ul>
                 </SongCard.SubTitle>
-                <Difficulty className="mt-4" difficulty={song.single}>
+                <Difficulty className="mt-auto pt-4" difficulty={song.single}>
                   Single:
                 </Difficulty>
                 <Difficulty difficulty={song.double}>Double:</Difficulty>
@@ -205,6 +207,17 @@ function IndexPage() {
           ))}
         </div>
       )}
+      <Dialog isOpen={!!preview} onClose={() => setPreview(null)}>
+        <div className="aspect-video p-4">
+          {preview ? (
+            <iframe
+              src={preview}
+              title="song preview"
+              className="h-full w-full rounded-lg md:w-3xl"
+            />
+          ) : null}
+        </div>
+      </Dialog>
     </div>
   );
 }

@@ -13,9 +13,9 @@ function Difficulty({
   ...rest
 }: PropsWithChildren<DifficultyProps>) {
   return (
-    <div className={cn("mt-auto flex", className)} {...rest}>
+    <div className={cn("flex", className)} {...rest}>
       <h3 className="mr-4 mb-2 font-medium text-slate-300">{children}</h3>
-      {difficulty.map((option, index) => (
+      {difficulty.slice(0, 5).map((option, index) => (
         <p
           key={option}
           className={`font-medium after:px-0.5 after:pl-1 after:text-slate-400 after:content-['-'] last:after:content-[''] ${

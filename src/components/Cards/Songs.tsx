@@ -5,7 +5,10 @@ function SongCardTitle({
   ...rest
 }: PropsWithChildren<ComponentProps<"h2">>) {
   return (
-    <h2 {...rest} className="mb-2 flex gap-4 font-bold text-2xl text-white">
+    <h2
+      {...rest}
+      className="relative mb-2 flex gap-4 font-bold text-2xl text-white"
+    >
       {children}
     </h2>
   );
