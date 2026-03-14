@@ -8,3 +8,7 @@ export const searchSchema = z.union([
     songartist: z.string().min(1, "Song Title or Artist Name must be set."),
   }),
 ]);
+
+export const songDetailsSchema = z.object({
+  id: z.string().min(1),
+});

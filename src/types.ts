@@ -1,6 +1,8 @@
 export type SearchSong = {
-  link: string;
+  id: string;
   title: string;
+  collection: string;
+  collectionId: string;
   single: [
     `${number}` | "-",
     `${number}` | "-",
@@ -18,4 +20,15 @@ export type SearchSong = {
     `${number}` | "-",
   ];
   artist: string[];
+};
+
+export type SongDetails = {
+  id: string;
+  bpm: string;
+  preview?: string;
+  quality: {
+    audio: 0 | 1 | 2 | "unknown";
+    banner: 0 | 1 | 2 | "unknown" | "custom";
+    background: 0 | 1 | 2 | "unknown" | "custom";
+  };
 };
