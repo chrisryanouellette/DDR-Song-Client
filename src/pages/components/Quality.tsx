@@ -46,6 +46,7 @@ export function Quality({
       <RiMusic2Line
         {...musicProps}
         className={cn(
+          "size-9",
           quality.audio === 2
             ? "text-green-400"
             : quality.audio === 1
@@ -59,6 +60,7 @@ export function Quality({
       <RiImage2Line
         {...bannerProps}
         className={cn(
+          "size-9",
           quality.banner === 2
             ? "text-green-400"
             : quality.banner === 1
@@ -74,6 +76,7 @@ export function Quality({
       <RiVideoLine
         {...backgroundProps}
         className={cn(
+          "size-9",
           quality.background === 2
             ? "text-green-400"
             : quality.background === 1

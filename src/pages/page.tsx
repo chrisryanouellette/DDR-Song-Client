@@ -68,7 +68,7 @@ function IndexPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto px-16">
       <form
         className="flex flex-wrap items-center gap-y-4 rounded-lg"
         onSubmit={handleSubmit(
@@ -79,7 +79,7 @@ function IndexPage() {
         <div className="flex flex-1 flex-col gap-y-2">
           <label
             htmlFor="song-title"
-            className="font-medium text-slate-400 text-sm"
+            className="font-medium text-3xl text-slate-200"
           >
             Song Title
           </label>
@@ -88,13 +88,13 @@ function IndexPage() {
             {...register("songtitle")}
             type="text"
             placeholder="Search by song title..."
-            className="col-start-1 flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-r-none"
+            className="col-start-1 flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-r-none"
           />
         </div>
         <div className="flex flex-1 flex-col gap-y-2">
           <label
             htmlFor="artist-name"
-            className="font-medium text-slate-400 text-sm"
+            className="font-medium text-3xl text-slate-200"
           >
             Artist Name
           </label>
@@ -103,22 +103,22 @@ function IndexPage() {
             {...register("songartist")}
             type="text"
             placeholder="Search by artist name..."
-            className="flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-l-none"
+            className="flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-l-none"
           />
         </div>
         <button
           type="submit"
-          className="relative col-span-2 flex min-w-32 basis-full items-center justify-center self-end rounded-lg bg-purple-600 px-4 py-3.5 font-mono text-sm text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 md:ml-4 md:basis-auto"
+          className="relative col-span-2 flex min-w-32 basis-full items-center justify-center self-end rounded-lg bg-purple-600 px-8 py-3.5 font-mono text-2xl text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 md:ml-4 md:basis-auto"
           disabled={isPending}
         >
           {isPending ? (
-            <RiLoader2Fill className="size-5 animate-spin" />
+            <RiLoader2Fill className="size-8 animate-spin" />
           ) : (
             "Search"
           )}
         </button>
         {"songtitle" in errors || "songartist" in errors ? (
-          <p className="mt-1 basis-full text-red-500 text-sm">
+          <p className="basis-full text-3xl text-red-500">
             {errors.songtitle?.message || errors.songartist?.message}
           </p>
         ) : null}
@@ -149,7 +149,7 @@ function IndexPage() {
                     type="button"
                     className="mt-1 h-min shrink-0 cursor-pointer"
                   >
-                    <RiDownload2Line className="pressed:fill-purple-500 transition-colors hover:fill-purple-500" />
+                    <RiDownload2Line className="size-8 pressed:fill-purple-500 transition-colors hover:fill-purple-500" />
                   </button>
                   <Suspense>
                     <Grade single={song.single} double={song.double} />
@@ -174,16 +174,16 @@ function IndexPage() {
                   </ul>
                 </SongCard.SubTitle>
                 <Difficulty className="mt-auto pt-4" difficulty={song.single}>
-                  Single:
+                  Single
                 </Difficulty>
-                <Difficulty difficulty={song.double}>Double:</Difficulty>
+                <Difficulty difficulty={song.double}>Double</Difficulty>
                 <a
                   href={`/collection?id=${song.collectionId}`}
-                  className="cursor-pointer text-purple-500 underline transition-colors hover:text-purple-700"
+                  className="cursor-pointer py-2 text-purple-400 text-xl underline transition-colors hover:text-purple-600"
                 >
                   {song.collection}
                 </a>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <Suspense fallback={<BpmFallback />}>
                     <Bpm />
                   </Suspense>
@@ -198,7 +198,7 @@ function IndexPage() {
                 <a
                   href={`https://zenius-i-vanisher.com//v5.2/viewsimfile.php?simfileid=${song.id}`}
                   target="_blank"
-                  className="mt-2 cursor-pointer text-right pressed:text-purple-600 text-gray-400 text-sm transition-colors hover:text-purple-500 active:text-purple-600"
+                  className="mt-2 cursor-pointer text-right pressed:text-purple-600 text-gray-400 text-lg transition-colors hover:text-purple-500 active:text-purple-600"
                 >
                   View Original
                 </a>
@@ -213,7 +213,7 @@ function IndexPage() {
             <iframe
               src={preview}
               title="song preview"
-              className="h-full w-full rounded-lg md:w-3xl"
+              className="h-full w-full rounded-lg md:w-7xl"
             />
           ) : null}
         </div>

@@ -58,7 +58,7 @@ export function Grade({ single, double }: GradeProps) {
     score += Number(backgroundScoring[background]);
   }
   return (
-    <p className="absolute right-0.5 translate-y-full">
+    <p className="absolute right-0.5 bottom-0 translate-y-full pt-1.5 text-3xl">
       {grades[Math.max(Math.min(Math.floor(score), grades.length - 1), 0)]}
     </p>
   );

@@ -1,16 +1,22 @@
 import { NavLink } from "react-router-dom";
+import { cn } from "../utils";
 
 function Header() {
   return (
-    <header className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center justify-between gap-y-2 sm:mb-8">
-      <h1 className="font-bold text-2xl">DDR Song Collection</h1>
+    <header className="mx-auto mb-4 flex flex-wrap items-center justify-between gap-y-2 px-16 sm:mb-8">
+      <h1 className="font-bold text-6xl">DDR Song Collection</h1>
       <nav className="flex items-center justify-between">
-        <ul className="flex space-x-4">
+        <ul className="flex space-x-8">
           <li>
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive ? "font-bold text-purple-400" : "hover:text-purple-400"
+                cn(
+                  "text-2xl",
+                  isActive
+                    ? "font-bold text-purple-400"
+                    : "hover:text-purple-400",
+                )
               }
             >
               Home
@@ -20,7 +26,12 @@ function Header() {
             <NavLink
               to="/game-selection"
               className={({ isActive }) =>
-                isActive ? "font-bold text-purple-400" : "hover:text-purple-400"
+                cn(
+                  "text-2xl",
+                  isActive
+                    ? "font-bold text-purple-400"
+                    : "hover:text-purple-400",
+                )
               }
             >
               Game Selection
