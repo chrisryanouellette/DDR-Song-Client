@@ -269,21 +269,26 @@ app.get<
   const params = songDownloadSchema.safeParse(req.query);
   if (params.error) return next(params.error);
 
-  const file = path.resolve(
+  const dir = path.resolve(
     outfoxSongsDir,
     decodeURIComponent(params.data.folder) ||
       decodeURIComponent(params.data.new),
-    `${decodeURIComponent(params.data.name)}.zip`,
   );
+  const result = path.resolve(dir, `${decodeURIComponent(params.data.name)}`);
+  const file = `${result}.zip`;
   if (params.data.new) {
     try {
-      await mkdir(file);
+      await mkdir(dir);
     } catch (error) {
       return next(error);
     }
   }
-  const result = existsSync(file);
-  if (result) return next(new Error("Download is already in progress."));
+  if (existsSync(result))
+    return next(
+      new Error("That song with that name already exists in this folder."),
+    );
+  if (existsSync(file))
+    return next(new Error("Download is already in progress."));
   downloadSimFile({ file, id: params.data.id, name: params.data.name });
   return res.json({ isError: false });
 });

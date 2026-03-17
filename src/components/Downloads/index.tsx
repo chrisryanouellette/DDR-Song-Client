@@ -1,4 +1,5 @@
 import { RiCheckboxCircleLine, RiDownload2Line } from "@remixicon/react";
+import { Link } from "react-router-dom";
 import { useDrawer } from "../../context/Dialog/hooks";
 import { useSongDownloadsContext } from "../../context/Downloads/hook";
 import Drawer from "../Drawer";
@@ -55,14 +56,14 @@ export default function SongDownloadsDrawer() {
             </h3>
             <div className="space-y-3">
               {completedDownloads.map(([id, { name }]) => (
-                <a
+                <Link
                   key={id}
-                  href={`/song/${id}`}
+                  to={`/song/${id}`}
                   className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 text-slate-600 transition-colors hover:bg-purple-200 hover:text-slate-800"
                 >
                   <span className="truncate font-medium">{name}</span>
                   <RiCheckboxCircleLine className="size-5 text-green-500" />
-                </a>
+                </Link>
               ))}
             </div>
           </section>

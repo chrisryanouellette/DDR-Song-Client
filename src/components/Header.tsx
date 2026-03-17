@@ -7,7 +7,9 @@ import { cn } from "../utils";
 function Header() {
   const { openDrawer } = useDrawer();
   const downloads = useSongDownloadsContext();
-  const isDownloading = !!Object.keys(downloads).length;
+  const isDownloading = !!Object.values(downloads).filter(
+    (data) => "progress" in data,
+  ).length;
 
   return (
     <header className="mx-auto mb-4 flex flex-wrap items-center justify-between gap-y-2 px-16 sm:mb-8">
@@ -27,6 +29,21 @@ function Header() {
               }
             >
               Home
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/organization"
+              className={({ isActive }) =>
+                cn(
+                  "text-2xl",
+                  isActive
+                    ? "font-bold text-purple-400"
+                    : "hover:text-purple-400",
+                )
+              }
+            >
+              Organization
             </NavLink>
           </li>
           <li>
