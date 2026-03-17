@@ -9,9 +9,11 @@ import Difficulty from "../components/Song/Difficulty";
 import { searchSchema } from "../schema";
 import type { SearchSong } from "../types";
 import { Bpm, BpmFallback } from "./components/Bpm";
+import { Download, DownloadFallback } from "./components/Download";
 import { Grade } from "./components/Grade";
 import { Preview, PreviewFallback } from "./components/Prewiew";
 import { Quality, QualityFallback } from "./components/Quality";
+import { FoldersProvider } from "./context/Folders";
 import { SongDetailsProvider } from "./context/Song";
 
 type SearchInputs = z.infer<typeof searchSchema>;
@@ -42,8 +44,10 @@ function IndexPage() {
     resolver: zodResolver(searchSchema),
   });
   const [preview, setPreview] = useState<string | null>(null);
-
   const [search, action, isPending] = useActionState(searchAction, null);
+  const [download, setDownload] = useState<{ name: string; id: string } | null>(
+    null,
+  );
 
   function handleSelectSong(song: string) {
     const current = getValues("songtitle");
@@ -65,6 +69,10 @@ function IndexPage() {
       (result) => startTransition(() => action(result)),
       console.error,
     )();
+  }
+
+  function handleDownload(id: string, name: string) {
+    setDownload({ id, name });
   }
 
   return (
@@ -148,6 +156,7 @@ function IndexPage() {
                   <button
                     type="button"
                     className="mt-1 h-min shrink-0 cursor-pointer"
+                    onClick={() => handleDownload(song.id, song.title)}
                   >
                     <RiDownload2Line className="size-8 pressed:fill-purple-500 transition-colors hover:fill-purple-500" />
                   </button>
@@ -218,6 +227,19 @@ function IndexPage() {
           ) : null}
         </div>
       </Dialog>
+      <FoldersProvider>
+        <Dialog isOpen={!!download} onClose={() => setDownload(null)}>
+          {download ? (
+            <Suspense fallback={<DownloadFallback />}>
+              <Download
+                id={download.id}
+                name={download.name}
+                close={() => setDownload(null)}
+              />
+            </Suspense>
+          ) : null}
+        </Dialog>
+      </FoldersProvider>
     </div>
   );
 }

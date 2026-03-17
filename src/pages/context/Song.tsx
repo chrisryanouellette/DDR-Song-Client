@@ -12,7 +12,7 @@ function SongDetailsProvider({
   id,
 }: PropsWithChildren<SongDetailsProviderProps>) {
   const prom = useMemo(() => {
-    const url = new URL(`${window.location.origin}/api/song-details`);
+    const url = new URL(`${window.location.origin}/api/song/details`);
     url.searchParams.append("id", id);
     return fetch(url).then((res) => res.json());
   }, [id]);

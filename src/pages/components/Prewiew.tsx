@@ -3,7 +3,7 @@ import { useSongDetailsContext } from "../hooks/song";
 
 export function PreviewFallback() {
   return (
-    <RiEyeLine className="mt-1 ml-auto shrink-0 animate-pulse text-gray-700" />
+    <RiEyeLine className="mt-1 ml-auto size-8 shrink-0 animate-pulse text-gray-700" />
   );
 }
 
