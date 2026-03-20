@@ -1,7 +1,9 @@
-import { RiMusic2Line } from "@remixicon/react";
-import { Suspense, use, useMemo } from "react";
+import { RiFoldersLine, RiMusic2Line } from "@remixicon/react";
+import { Suspense, use } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import type { EditSongSchema } from "../../../schema";
 import { cn } from "../../../utils";
+import { useSongsContext } from "../hooks/songs";
 
 function OrganizeSongsContentFallback() {
   return (
@@ -9,7 +11,7 @@ function OrganizeSongsContentFallback() {
       <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
         <RiMusic2Line className="size-32 animate-pulse" />
       </div>
-      <p className="text-xl">Loading folders...</p>
+      <p>Loading folders...</p>
     </div>
   );
 }
@@ -23,14 +25,24 @@ function OrganizeSongsContent({ promise }: OrganizeSongsContentProps) {
   const form = useFormContext();
   const selectedSongId = useWatch({ name: "song" });
 
+  function handleSelectSong(name: string) {
+    form.setValue("song", name);
+    form.clearErrors();
+  }
+
+  const handleDragStart = (e: React.DragEvent, songId: string) => {
+    e.dataTransfer.setData("songId", songId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return songs.length ? (
     songs.map(({ name }) => (
       <button
         key={name}
         type="button"
         draggable
-        //   onDragStart={(e) => handleDragStart(e, name)}
-        onClick={() => form.setValue("song", name)}
+        onDragStart={(e) => handleDragStart(e, name)}
+        onClick={() => handleSelectSong(name)}
         className={cn(
           "w-full cursor-grab rounded-lg px-4 py-3 text-left font-mono text-xl transition-all active:cursor-grabbing",
           selectedSongId === name
@@ -39,7 +51,6 @@ function OrganizeSongsContent({ promise }: OrganizeSongsContentProps) {
         )}
       >
         <div className="truncate font-bold text-xl">{name}</div>
-        {/* <div className="mt-1 truncate text-sm opacity-70">{song.artist}</div> */}
       </button>
     ))
   ) : (
@@ -50,28 +61,28 @@ function OrganizeSongsContent({ promise }: OrganizeSongsContentProps) {
 }
 
 export default function OrganizeSongs() {
-  const folder = useWatch({ name: "collection" });
-  const promise = useMemo(() => {
-    if (!folder) return Promise.reject();
-    const url = new URL(`${window.location.origin}/api/songs/list`);
-    url.searchParams.append("folder", folder);
-    return fetch(url).then((res) => res.json());
-  }, [folder]);
+  const collection = useWatch<EditSongSchema>({ name: "collection" });
+  const { prom } = useSongsContext();
 
   return (
     <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
       <h2 className="mb-4 font-bold text-2xl text-slate-100 uppercase tracking-wide">
         Songs
       </h2>
-      <div className="flex flex flex-1 flex-col flex-col space-y-2 pr-2">
-        {folder ? (
+      <div className="flex flex-1 flex-col space-y-2 pr-2">
+        {collection ? (
           <Suspense fallback={<OrganizeSongsContentFallback />}>
-            <OrganizeSongsContent promise={promise} />
+            <OrganizeSongsContent promise={prom} />
           </Suspense>
         ) : (
-          <p className="my-auto items-center justify-center px-4 text-center text-slate-500 italic">
-            Select a collection to view songs
-          </p>
+          <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
+            <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
+              <RiFoldersLine className="size-32" />
+            </div>
+            <p className="items-center justify-center px-4 text-center text-slate-500 italic">
+              Select a collection to view songs
+            </p>
+          </div>
         )}
       </div>
     </div>

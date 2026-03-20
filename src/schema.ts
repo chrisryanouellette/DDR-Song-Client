@@ -62,4 +62,16 @@ export const editSongSchema = z.object({
   genre: z.string().nonempty("Genre is required."),
 });
 
-export const listSongsSchema = z.object({ folder: z.string().nonempty() });
+export type EditSongSchema = z.infer<typeof editSongSchema>;
+
+export const listSongsSchema = z.object({ collection: z.string().nonempty() });
+export const getSongSchema = z.object({
+  collection: z.string().nonempty(),
+  song: z.string().nonempty(),
+});
+
+export const moveSongSchema = z.object({
+  collection: z.string().nonempty(),
+  dest: z.string().nonempty(),
+  song: z.string().nonempty(),
+});

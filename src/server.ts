@@ -1,5 +1,13 @@
 import { createWriteStream, existsSync } from "node:fs";
-import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
+import {
+  glob,
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -13,7 +21,11 @@ import express, {
   type Response,
 } from "express";
 import {
+  type EditSongSchema,
+  editSongSchema,
+  getSongSchema,
   listSongsSchema,
+  moveSongSchema,
   type SongDownloadProgressSchema,
   searchSchema,
   songDetailsSchema,
@@ -195,7 +207,7 @@ app.get<{ folder: string }, { songs: Song[] }, never, never>(
     const params = listSongsSchema.safeParse(req.query);
     if (params.error) return next(params.error);
     const dirs = await readdir(
-      path.resolve(outfoxSongsDir, params.data.folder),
+      path.resolve(outfoxSongsDir, params.data.collection),
       { withFileTypes: true },
     );
     const result: Song[] = [];
@@ -203,6 +215,136 @@ app.get<{ folder: string }, { songs: Song[] }, never, never>(
       if (dirent.isDirectory()) result.push({ name: dirent.name });
     }
     return res.json({ songs: result });
+  },
+);
+
+function getAttributeStartLocation(content: string, attr: string): number {
+  return content.indexOf(attr) + attr.length;
+}
+
+app.get<{ collection: string; song: string }, EditSongSchema, never, never>(
+  "/api/song/editor",
+  async (req, res, next) => {
+    const parsed = getSongSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
+    );
+    let filePath: string = "";
+    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+      if (filePath.includes(".ssc")) continue;
+      filePath = entry;
+    }
+    if (!filePath) {
+      return next(
+        new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
+      );
+    }
+    const file = (await readFile(filePath)).toString();
+    const titleIndex = getAttributeStartLocation(file, "#TITLE:");
+    const title = file.slice(titleIndex, file.indexOf(";", titleIndex));
+    const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
+    const subtitle = file.slice(
+      subtitleIndex,
+      file.indexOf(";", subtitleIndex),
+    );
+    const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
+    const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
+    const genreIndex = getAttributeStartLocation(file, "#GENRE:");
+    const genre = file.slice(genreIndex, file.indexOf(";", genreIndex));
+    return res.json({ ...parsed.data, title, subtitle, artist, genre });
+  },
+);
+
+function injectString(
+  file: string,
+  update: string,
+  start: number,
+  end: number,
+): string {
+  return `${file.slice(0, start)}${update}${file.slice(end)}`;
+}
+
+app.post<EditSongSchema, never, never, never>(
+  "/api/song/editor",
+  async (req, res, next) => {
+    const parsed = editSongSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
+    );
+    let filePath: string = "";
+    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+      if (filePath.includes(".ssc")) continue;
+      filePath = entry;
+    }
+    if (!filePath) {
+      return next(
+        new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
+      );
+    }
+    if (!existsSync(filePath)) {
+      return next(
+        new Error(
+          `Unable to update song in collection "${parsed.data.collection}" with name "${parsed.data.song}"`,
+        ),
+      );
+    }
+    let file = (await readFile(filePath)).toString();
+    const titleIndex = getAttributeStartLocation(file, "#TITLE:");
+    file = injectString(
+      file,
+      parsed.data.title,
+      titleIndex,
+      file.indexOf(";", titleIndex),
+    );
+    const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
+    file = injectString(
+      file,
+      parsed.data.subtitle || "",
+      subtitleIndex,
+      file.indexOf(";", subtitleIndex),
+    );
+    const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
+    file = injectString(
+      file,
+      parsed.data.artist,
+      artistIndex,
+      file.indexOf(";", artistIndex),
+    );
+    const genreIndex = getAttributeStartLocation(file, "#GENRE:");
+    file = injectString(
+      file,
+      parsed.data.genre,
+      genreIndex,
+      file.indexOf(";", genreIndex),
+    );
+    await writeFile(filePath, file);
+    return res.send();
+  },
+);
+
+app.get<{ collection: string; song: string }, never, never, never>(
+  "/api/song/move",
+  async (req, res, next) => {
+    const parsed = moveSongSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const current = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
+    );
+    const dest = path.resolve(
+      outfoxSongsDir,
+      parsed.data.dest,
+      parsed.data.song,
+    );
+    await rename(current, dest);
+    res.send();
   },
 );
 

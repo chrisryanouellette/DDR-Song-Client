@@ -1,7 +1,9 @@
 import { RiFoldersLine } from "@remixicon/react";
-import { Suspense, use, useMemo } from "react";
+import { type DragEvent, Suspense, use, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import type { EditSongSchema } from "../../../schema";
 import { cn } from "../../../utils";
+import { useSongsContext } from "../hooks/songs";
 
 function OrganizeCollectionsContentFallback() {
   return (
@@ -22,15 +24,45 @@ function OrganizeCollectionsContent({
   promise,
 }: OrganizeCollectionsContentProps) {
   const { folders } = use(promise);
-  const form = useFormContext();
+  const form = useFormContext<EditSongSchema>();
+  const { refresh } = useSongsContext();
+  const [dragOverCollectionId, setDragOverCollectionId] = useState<
+    null | string
+  >(null);
 
-  const selectedCollectionId = useWatch({
+  const selectedCollectionId = useWatch<EditSongSchema>({
     name: "collection",
   });
 
-  const handleDragOver = (e: React.DragEvent, collectionId: string) => {
+  const handleDragOver = (e: DragEvent, collectionId: string) => {
     e.preventDefault();
     setDragOverCollectionId(collectionId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCollectionId(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, collectionId: string) => {
+    e.preventDefault();
+    setDragOverCollectionId(null);
+    const activeCollection = form.getValues("collection");
+    const songId = e.dataTransfer.getData("songId");
+    if (!songId) throw new Error("Boom");
+    if (activeCollection === collectionId) throw new Error("Can't move");
+    try {
+      const url = new URL(`${window.location.origin}/api/song/move`);
+      url.searchParams.append("collection", activeCollection);
+      url.searchParams.append("dest", collectionId);
+      url.searchParams.append("song", songId);
+      const result = await fetch(url);
+      if (!result.ok) throw new Error(result.statusText);
+      refresh(activeCollection);
+    } catch (error) {
+      throw new Error("Something went wrong when moving song", {
+        cause: error,
+      });
+    }
   };
 
   return folders.map(({ name }) => (
@@ -42,15 +74,15 @@ function OrganizeCollectionsContent({
         form.setValue("song", "");
       }}
       onDragOver={(e) => handleDragOver(e, name)}
-      // onDragLeave={handleDragLeave}
-      // onDrop={(e) => handleDrop(e, collection.id)}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => handleDrop(e, name)}
       className={cn(
         "relative w-full rounded-lg px-4 py-4 text-left font-mono text-xl transition-all",
         selectedCollectionId === name
           ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
           : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
-        //   dragOverCollectionId === collection.id &&
-        //     "z-10 scale-[1.05] bg-slate-700 text-white ring-2 ring-purple-400",
+        dragOverCollectionId === name &&
+          "z-10 scale-[1.05] bg-slate-700 text-white ring-2 ring-purple-400",
       )}
     >
       {name}
@@ -79,7 +111,7 @@ export default function OrganizeCollections() {
       </div>
       <button
         type="button"
-        className="w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="mb-4 w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
       >
         New Folder
       </button>
