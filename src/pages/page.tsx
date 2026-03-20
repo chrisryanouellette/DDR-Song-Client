@@ -76,7 +76,7 @@ function IndexPage() {
   }
 
   return (
-    <div className="mx-auto px-16">
+    <div className="px-16">
       <form
         className="flex flex-wrap items-center gap-y-4 rounded-lg"
         onSubmit={handleSubmit(

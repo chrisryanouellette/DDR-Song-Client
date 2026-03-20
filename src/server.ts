@@ -13,12 +13,13 @@ import express, {
   type Response,
 } from "express";
 import {
+  listSongsSchema,
   type SongDownloadProgressSchema,
   searchSchema,
   songDetailsSchema,
   songDownloadSchema,
 } from "./schema.ts";
-import type { SearchSong, SongDetails, Throwable } from "./types.ts";
+import type { SearchSong, Song, SongDetails, Throwable } from "./types.ts";
 
 const app = express();
 const port = 3000;
@@ -188,6 +189,23 @@ app.get("/api/folders/list", async (_, res, next) => {
   }
 });
 
+app.get<{ folder: string }, { songs: Song[] }, never, never>(
+  "/api/songs/list",
+  async (req, res, next) => {
+    const params = listSongsSchema.safeParse(req.query);
+    if (params.error) return next(params.error);
+    const dirs = await readdir(
+      path.resolve(outfoxSongsDir, params.data.folder),
+      { withFileTypes: true },
+    );
+    const result: Song[] = [];
+    for (const dirent of dirs) {
+      if (dirent.isDirectory()) result.push({ name: dirent.name });
+    }
+    return res.json({ songs: result });
+  },
+);
+
 async function downloadSimFile({
   file,
   name,
@@ -248,6 +266,7 @@ async function downloadSimFile({
     await writeFile(path.resolve(output, `${id}.json`), metadata);
   } catch (error) {
     console.error(error);
+    await unlink(file);
     const message = JSON.stringify({ id, error: "Boom" });
     for (const client of clients) {
       client.write(`data: ${message}\n\n`);
@@ -289,12 +308,12 @@ app.get<
       return next(error);
     }
   }
-  // if (existsSync(result))
-  //   return next(
-  //     new Error("That song with that name already exists in this folder."),
-  //   );
-  // if (existsSync(file))
-  //   return next(new Error("Download is already in progress."));
+  if (existsSync(result))
+    return next(
+      new Error("That song with that name already exists in this folder."),
+    );
+  if (existsSync(file))
+    return next(new Error("Download is already in progress."));
   downloadSimFile({ file, id: params.data.id, name: params.data.name });
   return res.json({ isError: false });
 });

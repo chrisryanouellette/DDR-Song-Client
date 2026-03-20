@@ -12,7 +12,7 @@ function Header() {
   ).length;
 
   return (
-    <header className="mx-auto mb-4 flex flex-wrap items-center justify-between gap-y-2 px-16 sm:mb-8">
+    <header className="mb-4 flex flex-wrap items-center justify-between gap-y-2 px-16 sm:mb-8">
       <h1 className="font-bold text-6xl">DDR Song Collection</h1>
       <nav className="flex items-center justify-between">
         <ul className="flex space-x-8">
@@ -33,7 +33,7 @@ function Header() {
           </li>
           <li>
             <NavLink
-              to="/organization"
+              to="/organize"
               className={({ isActive }) =>
                 cn(
                   "text-2xl",
@@ -43,7 +43,7 @@ function Header() {
                 )
               }
             >
-              Organization
+              Organize
             </NavLink>
           </li>
           <li>

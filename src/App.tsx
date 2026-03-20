@@ -5,6 +5,7 @@ import { DrawerProvider } from "./context/Dialog";
 import { DownloadsProvider } from "./context/Downloads";
 import CollectionPage from "./pages/CollectionPage";
 import GameSelectionPage from "./pages/GameSelectionPage";
+import OrganizePage from "./pages/organize/page";
 import IndexPage from "./pages/page";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<IndexPage />} />
             <Route path="/collection" element={<CollectionPage />} />
             <Route path="/game-selection" element={<GameSelectionPage />} />
+            <Route path="/organize" element={<OrganizePage />} />
           </Routes>
         </Router>
       </DownloadsProvider>

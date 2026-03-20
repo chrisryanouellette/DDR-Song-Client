@@ -40,3 +40,7 @@ export type SongDetails = {
 export type Folder = {
   name: string;
 };
+
+export type Song = {
+  name: string;
+};

@@ -52,3 +52,14 @@ export const songDownloadProgressSchema = z.record(
 export type SongDownloadProgressSchema = z.infer<
   typeof songDownloadProgressSchema
 >;
+
+export const editSongSchema = z.object({
+  collection: z.string().nonempty("Collection is required."),
+  song: z.string().nonempty("Song is required."),
+  title: z.string().nonempty("Title is required."),
+  subtitle: z.string().optional(),
+  artist: z.string().nonempty("Artist is required."),
+  genre: z.string().nonempty("Genre is required."),
+});
+
+export const listSongsSchema = z.object({ folder: z.string().nonempty() });
