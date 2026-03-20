@@ -16,10 +16,24 @@ export function useDownloadProgress() {
       if (parsed.error) throw parsed.error;
       setDownloads((prev) => ({ ...prev, ...parsed.data }));
     };
+    evtSource.onerror = (event) => {
+      console.error(event);
+      setDownloads((prev) => {
+        const inProgress: SongDownloadProgressSchema = {};
+        for (const [id, data] of Object.entries(prev)) {
+          if ("completed" in data) continue;
+          inProgress[id] = {
+            name: data.name,
+            error: `Server error: ${event.type}`,
+          };
+        }
+        return { ...prev, ...inProgress };
+      });
+    };
     return function cleanupInitDownloadEvents() {
       evtSource.close();
     };
-  });
+  }, []);
 
   return downloads;
 }

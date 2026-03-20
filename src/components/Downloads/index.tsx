@@ -1,4 +1,8 @@
-import { RiCheckboxCircleLine, RiDownload2Line } from "@remixicon/react";
+import {
+  RiCheckboxCircleLine,
+  RiDownload2Line,
+  RiErrorWarningLine,
+} from "@remixicon/react";
 import { Link } from "react-router-dom";
 import { useDrawer } from "../../context/Dialog/hooks";
 import { useSongDownloadsContext } from "../../context/Downloads/hook";
@@ -9,10 +13,13 @@ export default function SongDownloadsDrawer() {
   const downloads = useSongDownloadsContext();
 
   const activeDownloads = Object.entries(downloads).filter(
-    ([, value]) => !("completed" in value),
+    ([, value]) => !("completed" in value) && !("error" in value),
   );
   const completedDownloads = Object.entries(downloads).filter(
     ([, value]) => "completed" in value,
+  );
+  const failedDownloads = Object.entries(downloads).filter(
+    ([, value]) => "error" in value,
   );
 
   return (
@@ -49,6 +56,28 @@ export default function SongDownloadsDrawer() {
           </section>
         )}
 
+        {!!failedDownloads.length && (
+          <section className="mb-8">
+            <h3 className="mb-4 font-bold text-red-500 text-sm uppercase tracking-wider">
+              Errors
+            </h3>
+            <div className="space-y-3">
+              {failedDownloads.map(([id, { name }]) => (
+                <div
+                  key={id}
+                  className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 p-3 text-red-600"
+                >
+                  <span className="truncate font-medium">{name}</span>
+                  <div className="flex items-center gap-1.5 font-semibold text-xs uppercase tracking-tight">
+                    <RiErrorWarningLine className="size-4 shrink-0" />
+                    Failed
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {!!completedDownloads.length && (
           <section>
             <h3 className="mb-4 font-bold text-slate-500 text-sm uppercase tracking-wider">
@@ -62,7 +91,7 @@ export default function SongDownloadsDrawer() {
                   className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 text-slate-600 transition-colors hover:bg-purple-200 hover:text-slate-800"
                 >
                   <span className="truncate font-medium">{name}</span>
-                  <RiCheckboxCircleLine className="size-5 text-green-500" />
+                  <RiCheckboxCircleLine className="size-5 shrink-0 text-green-500" />
                 </Link>
               ))}
             </div>

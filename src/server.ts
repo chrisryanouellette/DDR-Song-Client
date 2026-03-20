@@ -1,5 +1,5 @@
 import { createWriteStream, existsSync } from "node:fs";
-import { mkdir, readdir, unlink } from "node:fs/promises";
+import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -176,7 +176,7 @@ app.get<{ id: string }, SongDetails, never, never>(
   },
 );
 
-app.get("/api/folders/list", async (req, res, next) => {
+app.get("/api/folders/list", async (_, res, next) => {
   try {
     const contents = await readdir(outfoxSongsDir, { withFileTypes: true });
     const dirs = contents.filter((content) => content.isDirectory());
@@ -240,6 +240,12 @@ async function downloadSimFile({
     await finished(webReadable.pipe(fileStream));
     await decompress(file, path.dirname(file));
     await unlink(file);
+    const output = path.resolve(
+      path.dirname(file),
+      path.basename(file, path.extname(file)),
+    );
+    const metadata = JSON.stringify({ id, name });
+    await writeFile(path.resolve(output, `${id}.json`), metadata);
   } catch (error) {
     console.error(error);
     const message = JSON.stringify({ id, error: "Boom" });
@@ -283,18 +289,18 @@ app.get<
       return next(error);
     }
   }
-  if (existsSync(result))
-    return next(
-      new Error("That song with that name already exists in this folder."),
-    );
-  if (existsSync(file))
-    return next(new Error("Download is already in progress."));
+  // if (existsSync(result))
+  //   return next(
+  //     new Error("That song with that name already exists in this folder."),
+  //   );
+  // if (existsSync(file))
+  //   return next(new Error("Download is already in progress."));
   downloadSimFile({ file, id: params.data.id, name: params.data.name });
   return res.json({ isError: false });
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+app.use((err: unknown, _: Request, res: Response, _next: NextFunction) => {
   if (err instanceof Error) {
     return res.status(500).send(err.message);
   }
