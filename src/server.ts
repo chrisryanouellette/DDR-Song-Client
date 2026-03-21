@@ -21,6 +21,7 @@ import express, {
   type Response,
 } from "express";
 import {
+  createFolderSchema,
   type EditSongSchema,
   editSongSchema,
   getSongSchema,
@@ -189,12 +190,12 @@ app.get<{ id: string }, SongDetails, never, never>(
   },
 );
 
-app.get("/api/folders/list", async (_, res, next) => {
+app.get("/api/collections/list", async (_, res, next) => {
   try {
     const contents = await readdir(outfoxSongsDir, { withFileTypes: true });
     const dirs = contents.filter((content) => content.isDirectory());
     const names = dirs.map((dir) => ({ name: dir.name }));
-    return res.json({ folders: names });
+    return res.json({ collections: names });
   } catch (error) {
     console.log(error);
     return next(error);
@@ -215,6 +216,20 @@ app.get<{ folder: string }, { songs: Song[] }, never, never>(
       if (dirent.isDirectory()) result.push({ name: dirent.name });
     }
     return res.json({ songs: result });
+  },
+);
+
+app.get<{ collection: string }, never, never, never>(
+  "/api/collection/create",
+  async (req, res, next) => {
+    const parsed = createFolderSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.join(outfoxSongsDir, parsed.data.collection);
+    if (existsSync(dir)) {
+      return next(new Error("That folder already exists."));
+    }
+    await mkdir(dir);
+    return res.send();
   },
 );
 

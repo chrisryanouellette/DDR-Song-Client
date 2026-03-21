@@ -7,12 +7,12 @@ import {
 import type { Folder } from "../../types";
 
 const FoldersContext = createContext<{
-  prom: Promise<{ folders: Folder[] }>;
+  prom: Promise<{ collections: Folder[] }>;
   refresh: () => void;
 } | null>(null);
 
-const url = new URL(`${window.location.origin}/api/folders/list`);
-let prom: Promise<{ folders: Folder[] }> | null = null;
+const url = new URL(`${window.location.origin}/api/collections/list`);
+let prom: Promise<{ collections: Folder[] }> | null = null;
 function initFolders(reset?: true) {
   if (!reset && prom) return prom;
   prom = fetch(url).then((res) => res.json());

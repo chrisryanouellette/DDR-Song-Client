@@ -1,8 +1,10 @@
-import { RiFoldersLine } from "@remixicon/react";
-import { type DragEvent, Suspense, use, useMemo, useState } from "react";
+import { RiDeleteBin7Line, RiFoldersLine } from "@remixicon/react";
+import { type DragEvent, Suspense, use, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { useDrawer } from "../../../context/Dialog/hooks";
 import type { EditSongSchema } from "../../../schema";
 import { cn } from "../../../utils";
+import { useCollectionsContext } from "../hooks/collections";
 import { useSongsContext } from "../hooks/songs";
 
 function OrganizeCollectionsContentFallback() {
@@ -17,13 +19,13 @@ function OrganizeCollectionsContentFallback() {
 }
 
 type OrganizeCollectionsContentProps = {
-  promise: Promise<{ folders: { name: string }[] }>;
+  promise: Promise<{ collections: { name: string }[] }>;
 };
 
 function OrganizeCollectionsContent({
   promise,
 }: OrganizeCollectionsContentProps) {
-  const { folders } = use(promise);
+  const { collections } = use(promise);
   const form = useFormContext<EditSongSchema>();
   const { refresh } = useSongsContext();
   const [dragOverCollectionId, setDragOverCollectionId] = useState<
@@ -65,13 +67,14 @@ function OrganizeCollectionsContent({
     }
   };
 
-  return folders.map(({ name }) => (
+  return collections.map(({ name }) => (
     <button
       key={name}
       type="button"
       onClick={() => {
         form.setValue("collection", name);
         form.setValue("song", "");
+        refresh(name);
       }}
       onDragOver={(e) => handleDragOver(e, name)}
       onDragLeave={handleDragLeave}
@@ -94,24 +97,26 @@ function OrganizeCollectionsContent({
 }
 
 export default function OrganizeCollections() {
-  const promise = useMemo(
-    () => fetch("/api/folders/list").then((res) => res.json()),
-    [],
-  );
+  const { prom } = useCollectionsContext();
+  const { openDrawer } = useDrawer();
 
   return (
     <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
-      <h2 className="mb-4 font-bold text-2xl text-slate-100 uppercase tracking-wide">
+      <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase">
         Collections
+        <button type="button" className="mr-2 ml-auto hover:text-purple-300">
+          <RiDeleteBin7Line />
+        </button>
       </h2>
       <div className="flex flex-1 flex-col space-y-2 pr-2">
         <Suspense fallback={<OrganizeCollectionsContentFallback />}>
-          <OrganizeCollectionsContent promise={promise} />
+          <OrganizeCollectionsContent promise={prom} />
         </Suspense>
       </div>
       <button
         type="button"
         className="mb-4 w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        onClick={() => openDrawer("new-folder")}
       >
         New Folder
       </button>

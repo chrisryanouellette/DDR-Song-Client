@@ -9,8 +9,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 import type { EditSongSchema } from "../../../schema";
 
 const SongsContext = createContext<{
-  prom: Promise<{ songs: { name: string }[] }>;
-  refresh: (collection: string) => void;
+  prom: Promise<{ songs: { name: string }[] } | undefined>;
+  refresh: () => void;
 } | null>(null);
 
 function initSongsPromise(collection?: string) {

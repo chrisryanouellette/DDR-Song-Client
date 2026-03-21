@@ -47,7 +47,7 @@ type DownloadProps = {
 };
 
 export function Download({ id, name, close }: DownloadProps) {
-  const { folders, refresh } = useFoldersContext();
+  const { collections, refresh } = useFoldersContext();
   const form = useForm({
     resolver: zodResolver(songDownloadSchema),
     defaultValues: { id, name },
@@ -102,7 +102,7 @@ export function Download({ id, name, close }: DownloadProps) {
         onClick={() => form.setValue("new", "")}
       >
         <option value="">Select an Option</option>
-        {folders.map((folder) => (
+        {collections.map((folder) => (
           <option key={folder.name} className="text-gray-700">
             {folder.name}
           </option>

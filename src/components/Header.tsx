@@ -46,7 +46,7 @@ function Header() {
               Organize
             </NavLink>
           </li>
-          <li>
+          {/* <li>
             <NavLink
               to="/game-selection"
               className={({ isActive }) =>
@@ -60,7 +60,7 @@ function Header() {
             >
               Game Selection
             </NavLink>
-          </li>
+          </li> */}
         </ul>
         <button
           type="button"

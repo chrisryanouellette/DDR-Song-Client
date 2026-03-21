@@ -142,7 +142,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         htmlFor="genre"
         className="mt-8 mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
       >
-        Genre <span className="text-sm">Comma separated</span>
+        Genre
       </label>
       <input
         {...form.register("genre")}
@@ -201,7 +201,7 @@ export function OrganizeEditor() {
       </h2>
       {selectedSongId ? (
         <Suspense fallback={<OrganizeEditorContentFallback />}>
-          <OrganizeEditorContent promise={promise} />
+          <OrganizeEditorContent key={selectedSongId} promise={promise} />
         </Suspense>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">

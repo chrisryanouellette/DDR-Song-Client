@@ -64,6 +64,9 @@ export const editSongSchema = z.object({
 
 export type EditSongSchema = z.infer<typeof editSongSchema>;
 
+export const createFolderSchema = z.object({
+  collection: z.string().nonempty(),
+});
 export const listSongsSchema = z.object({ collection: z.string().nonempty() });
 export const getSongSchema = z.object({
   collection: z.string().nonempty(),

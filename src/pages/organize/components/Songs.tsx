@@ -1,5 +1,11 @@
-import { RiFoldersLine, RiMusic2Line } from "@remixicon/react";
-import { Suspense, use } from "react";
+import {
+  RiDeleteBackLine,
+  RiDeleteBin7Line,
+  RiFoldersLine,
+  RiMusic2Line,
+  RiRefreshLine,
+} from "@remixicon/react";
+import { Suspense, use, useDeferredValue } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { EditSongSchema } from "../../../schema";
 import { cn } from "../../../utils";
@@ -17,11 +23,15 @@ function OrganizeSongsContentFallback() {
 }
 
 type OrganizeSongsContentProps = {
-  promise: Promise<{ songs: { name: string }[] }>;
+  promise: Promise<{ songs: { name: string }[] } | undefined>;
+  isRefreshing: boolean;
 };
 
-function OrganizeSongsContent({ promise }: OrganizeSongsContentProps) {
-  const { songs } = use(promise);
+function OrganizeSongsContent({
+  promise,
+  isRefreshing,
+}: OrganizeSongsContentProps) {
+  const result = use(promise);
   const form = useFormContext();
   const selectedSongId = useWatch({ name: "song" });
 
@@ -35,44 +45,71 @@ function OrganizeSongsContent({ promise }: OrganizeSongsContentProps) {
     e.dataTransfer.effectAllowed = "move";
   };
 
-  return songs.length ? (
-    songs.map(({ name }) => (
-      <button
-        key={name}
-        type="button"
-        draggable
-        onDragStart={(e) => handleDragStart(e, name)}
-        onClick={() => handleSelectSong(name)}
-        className={cn(
-          "w-full cursor-grab rounded-lg px-4 py-3 text-left font-mono text-xl transition-all active:cursor-grabbing",
-          selectedSongId === name
-            ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
-            : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
-        )}
-      >
-        <div className="truncate font-bold text-xl">{name}</div>
-      </button>
-    ))
-  ) : (
-    <p className="my-auto flex items-center justify-center text-slate-500 italic">
-      No songs in this collection
-    </p>
+  if (!result?.songs) return <OrganizeSongsContentFallback />;
+  const { songs } = result;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-1 flex-col space-y-2 transition-opacity duration-300",
+        isRefreshing ? "opacity-40" : "opacity-100",
+      )}
+    >
+      {songs.length ? (
+        songs.map(({ name }) => (
+          <button
+            key={name}
+            type="button"
+            draggable
+            onDragStart={(e) => handleDragStart(e, name)}
+            onClick={() => handleSelectSong(name)}
+            className={cn(
+              "w-full cursor-grab rounded-lg px-4 py-3 text-left font-mono text-xl transition-all active:cursor-grabbing",
+              selectedSongId === name
+                ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+            )}
+          >
+            <div className="truncate font-bold text-xl">{name}</div>
+          </button>
+        ))
+      ) : (
+        <p className="my-auto flex items-center justify-center text-slate-500 italic">
+          No songs in this collection
+        </p>
+      )}
+    </div>
   );
 }
 
 export default function OrganizeSongs() {
   const collection = useWatch<EditSongSchema>({ name: "collection" });
-  const { prom } = useSongsContext();
+  const { prom, refresh } = useSongsContext();
+  const deferredProm = useDeferredValue(prom);
+  const isRefreshing = prom !== deferredProm;
 
   return (
     <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
-      <h2 className="mb-4 font-bold text-2xl text-slate-100 uppercase tracking-wide">
+      <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase tracking-wide">
         Songs
+        <button
+          type="button"
+          className="mr-2 ml-auto hover:text-purple-300"
+          onClick={refresh}
+        >
+          <RiRefreshLine />
+        </button>
+        <button type="button" className="mr-2 hover:text-purple-300">
+          <RiDeleteBin7Line />
+        </button>
       </h2>
-      <div className="flex flex-1 flex-col space-y-2 pr-2">
+      <div className="flex flex-1 flex-col pr-2">
         {collection ? (
           <Suspense fallback={<OrganizeSongsContentFallback />}>
-            <OrganizeSongsContent promise={prom} />
+            <OrganizeSongsContent
+              promise={deferredProm}
+              isRefreshing={isRefreshing}
+            />
           </Suspense>
         ) : (
           <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
