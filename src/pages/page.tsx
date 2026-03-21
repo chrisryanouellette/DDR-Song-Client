@@ -127,7 +127,8 @@ function IndexPage() {
         </button>
         {"songtitle" in errors || "songartist" in errors ? (
           <p className="basis-full text-3xl text-red-500">
-            {errors.songtitle?.message || errors.songartist?.message}
+            {"songtitle" in errors ? errors.songtitle?.message : null}
+            {"songartist" in errors ? errors.songartist?.message : null}
           </p>
         ) : null}
       </form>

@@ -17,7 +17,7 @@ export function DownloadFallback() {
 }
 
 async function actionDownloadSong(
-  prev: Throwable<boolean>,
+  _: Throwable<boolean>,
   data: z.infer<typeof songDownloadSchema>,
 ): Promise<Throwable<boolean>> {
   const url = new URL(`${window.location.origin}/api/song/download`);

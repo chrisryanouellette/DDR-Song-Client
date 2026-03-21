@@ -10,7 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+sea
 *.local
+sea-config.json
 
 # Editor directories and files
 .vscode/*
