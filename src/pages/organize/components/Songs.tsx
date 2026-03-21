@@ -2,6 +2,7 @@ import {
   RiDeleteBackLine,
   RiDeleteBin7Line,
   RiFoldersLine,
+  RiMistLine,
   RiMusic2Line,
   RiRefreshLine,
 } from "@remixicon/react";
@@ -64,19 +65,30 @@ function OrganizeSongsContent({
             onDragStart={(e) => handleDragStart(e, name)}
             onClick={() => handleSelectSong(name)}
             className={cn(
-              "w-full cursor-grab rounded-lg px-4 py-3 text-left font-mono text-xl transition-all active:cursor-grabbing",
+              "flex w-full cursor-grab items-center rounded-lg px-4 py-3 text-left font-bold font-mono text-xl transition-all active:cursor-grabbing",
               selectedSongId === name
                 ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
                 : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
             )}
           >
-            <div className="truncate font-bold text-xl">{name}</div>
+            {name}
+            {selectedSongId === name ? (
+              <button
+                type="button"
+                className="mr-2 ml-auto hover:text-slate-900"
+              >
+                <RiDeleteBin7Line />
+              </button>
+            ) : null}
           </button>
         ))
       ) : (
-        <p className="my-auto flex items-center justify-center text-slate-500 italic">
-          No songs in this collection
-        </p>
+        <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
+          <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
+            <RiMistLine className="size-32" />
+          </div>
+          <p> No songs in this collection</p>
+        </div>
       )}
     </div>
   );
@@ -98,9 +110,6 @@ export default function OrganizeSongs() {
           onClick={refresh}
         >
           <RiRefreshLine />
-        </button>
-        <button type="button" className="mr-2 hover:text-purple-300">
-          <RiDeleteBin7Line />
         </button>
       </h2>
       <div className="flex flex-1 flex-col pr-2">

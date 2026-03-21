@@ -59,7 +59,7 @@ function OrganizeCollectionsContent({
       url.searchParams.append("song", songId);
       const result = await fetch(url);
       if (!result.ok) throw new Error(result.statusText);
-      refresh(activeCollection);
+      refresh();
     } catch (error) {
       throw new Error("Something went wrong when moving song", {
         cause: error,
@@ -74,13 +74,12 @@ function OrganizeCollectionsContent({
       onClick={() => {
         form.setValue("collection", name);
         form.setValue("song", "");
-        refresh(name);
       }}
       onDragOver={(e) => handleDragOver(e, name)}
       onDragLeave={handleDragLeave}
       onDrop={(e) => handleDrop(e, name)}
       className={cn(
-        "relative w-full rounded-lg px-4 py-4 text-left font-mono text-xl transition-all",
+        "relative flex w-full items-center rounded-lg px-4 py-4 text-left font-mono text-xl transition-all",
         selectedCollectionId === name
           ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
           : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
@@ -89,9 +88,17 @@ function OrganizeCollectionsContent({
       )}
     >
       {name}
-      {/* {dragOverCollectionId === collection.id && (
-              <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-purple-500/25" />
-            )} */}
+      {selectedCollectionId === name ? (
+        <button
+          type="button"
+          className="mr-2 ml-auto transition-colors hover:text-slate-900"
+        >
+          <RiDeleteBin7Line />
+        </button>
+      ) : null}
+      {dragOverCollectionId === name && (
+        <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-purple-500/25" />
+      )}
     </button>
   ));
 }
@@ -104,9 +111,6 @@ export default function OrganizeCollections() {
     <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
       <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase">
         Collections
-        <button type="button" className="mr-2 ml-auto hover:text-purple-300">
-          <RiDeleteBin7Line />
-        </button>
       </h2>
       <div className="flex flex-1 flex-col space-y-2 pr-2">
         <Suspense fallback={<OrganizeCollectionsContentFallback />}>
@@ -116,9 +120,9 @@ export default function OrganizeCollections() {
       <button
         type="button"
         className="mb-4 w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        onClick={() => openDrawer("new-folder")}
+        onClick={() => openDrawer("new-collection")}
       >
-        New Folder
+        New Collection
       </button>
     </div>
   );

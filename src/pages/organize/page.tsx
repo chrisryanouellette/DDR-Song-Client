@@ -1,6 +1,6 @@
 import OrganizeCollections from "./components/Collections";
 import { OrganizeEditor } from "./components/Editor";
-import NewFolderDialog from "./components/NewFolder";
+import NewCollectionDialog from "./components/NewCollection";
 import OrganizeSongs from "./components/Songs";
 import { CollectionsProvider } from "./context/Collections";
 import OrganizeFormContextProvider from "./context/Form";
@@ -16,7 +16,7 @@ export default function OrganizePage() {
             <OrganizeSongs />
             <OrganizeEditor />
           </div>
-          <NewFolderDialog />
+          <NewCollectionDialog />
         </SongsContextProvider>
       </CollectionsProvider>
     </OrganizeFormContextProvider>

@@ -6,19 +6,19 @@ import { useDrawer } from "../../../context/Dialog/hooks";
 import { cn } from "../../../utils";
 import { useCollectionsContext } from "../hooks/collections";
 
-const newFolderSchema = z.object({
-  name: z.string().min(1, "Folder name is required."),
+const newCollectionSchema = z.object({
+  name: z.string().min(1, "Collection name is required."),
 });
 
-type NewFolderSchema = z.infer<typeof newFolderSchema>;
+type NewCollectionSchema = z.infer<typeof newCollectionSchema>;
 
-export default function NewFolderDialog() {
+export default function NewCollectionDialog() {
   const { refresh } = useCollectionsContext();
   const { openDrawerId, closeDrawer } = useDrawer();
-  const isOpen = openDrawerId === "new-folder";
+  const isOpen = openDrawerId === "new-collection";
 
-  const form = useForm<NewFolderSchema>({
-    resolver: zodResolver(newFolderSchema),
+  const form = useForm<NewCollectionSchema>({
+    resolver: zodResolver(newCollectionSchema),
     defaultValues: { name: "" },
   });
 
@@ -35,7 +35,7 @@ export default function NewFolderDialog() {
       form.reset();
       refresh();
     } catch (error) {
-      throw new Error("Something went wrong when creating the folder.", {
+      throw new Error("Something went wrong when creating the Collection.", {
         cause: error,
       });
     }
@@ -48,16 +48,16 @@ export default function NewFolderDialog() {
         onSubmit={onSubmit}
       >
         <label
-          htmlFor="new-folder-name"
+          htmlFor="new-Collection-name"
           className="mb-2 text-2xl text-gray-700"
         >
-          Create a <span className="font-semibold">New Folder</span>
+          Create a <span className="font-semibold">New Collection</span>
         </label>
         <input
           {...form.register("name")}
           type="text"
-          id="new-folder-name"
-          placeholder="Folder Name"
+          id="new-Collection-name"
+          placeholder="Collection Name"
           className={cn(
             "rounded-md border border-gray-300 p-2 text-xl transition-opacity focus:outline-none focus:ring-2 focus:ring-purple-400",
             form.formState.errors.name && "border-red-500",

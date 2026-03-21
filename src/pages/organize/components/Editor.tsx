@@ -79,7 +79,28 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         console.error,
       )}
     >
-      <div className="grid grid-cols-2 gap-8">
+      <label
+        htmlFor="folder"
+        className="mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
+      >
+        Folder Name{" "}
+        <span className="text-sm">(Has no effect within the game)</span>
+      </label>
+      <input
+        type="text"
+        id="folder"
+        {...form.register("folder")}
+        placeholder="Enter the folder name..."
+        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+      />
+      <ErrorMessage
+        errors={form.formState.errors}
+        name="folder"
+        render={({ message }) => (
+          <p className="mt-1 text-lg text-red-600">{message}</p>
+        )}
+      />
+      <div className="mt-8 grid grid-cols-2 gap-8">
         <div>
           <label
             htmlFor="song-title"
@@ -122,7 +143,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         htmlFor="artist"
         className="mt-8 mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
       >
-        Artist <span className="text-sm">Comma separated</span>
+        Artist
       </label>
       <input
         {...form.register("artist")}
