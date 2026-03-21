@@ -59,7 +59,9 @@ if (!existsSync(outfoxDirectory)) {
 
 const outfoxSongsDir = path.resolve(outfoxDirectory, "./Songs");
 
-app.use("/", express.static(path.join(process.cwd(), "/dist")));
+const distDir = path.join(process.cwd(), "/dist");
+const publicDir = existsSync(distDir) ? distDir : process.cwd();
+app.use("/", express.static(publicDir));
 
 app.get("/api/search", async (req, res, next) => {
   const params = searchSchema.safeParse(req.query);
