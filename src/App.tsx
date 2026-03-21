@@ -1,5 +1,6 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import SongDownloadsDrawer from "./components/Downloads";
+import { FullscreenDialog } from "./components/Fullscreen";
 import Header from "./components/Header";
 import ToastContainer from "./components/Toast";
 import { DrawerProvider } from "./context/Dialog";
@@ -14,6 +15,7 @@ function App() {
     <DrawerProvider>
       <DownloadsProvider>
         <ToastContainer />
+        <FullscreenDialog />
         <Router>
           <Header />
           <SongDownloadsDrawer />
