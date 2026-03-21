@@ -1,8 +1,8 @@
 import { useContext } from "react";
-import SongContext from "../context/Collections";
+import CollectionsContext from "../context/Collections";
 
 export function useCollectionsContext() {
-  const context = useContext(SongContext);
+  const context = useContext(CollectionsContext);
   if (!context) {
     throw new Error(`useCollectionsContext can only be used in a SongProvider`);
   }

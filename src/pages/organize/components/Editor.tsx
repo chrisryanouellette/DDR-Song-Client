@@ -4,6 +4,7 @@ import { Suspense, startTransition, use, useActionState, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { EditSongSchema } from "../../../schema";
 import type { Throwable } from "../../../types";
+import { useSongsContext } from "../hooks/songs";
 
 function OrganizeEditorContentFallback() {
   return (
@@ -16,14 +17,14 @@ function OrganizeEditorContentFallback() {
   );
 }
 
-async function handleSaveSongDetails(
-  prev: Throwable<boolean>,
+async function saveSongDetailsAction(
   data: EditSongSchema,
 ): Promise<Throwable<boolean>> {
   try {
     const url = new URL(`${window.location.origin}/api/song/editor`);
     url.searchParams.append("collection", data.collection);
     url.searchParams.append("song", data.song);
+    url.searchParams.append("folder", data.folder);
     url.searchParams.append("title", data.title);
     url.searchParams.append("subtitle", data.subtitle ?? "");
     url.searchParams.append("artist", data.artist);
@@ -55,7 +56,16 @@ type OrganizeEditorContentProps = {
 function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
   use(promise);
   const form = useFormContext<EditSongSchema>();
-  const [state, action, isPending] = useActionState(handleSaveSongDetails, {
+  const { refresh } = useSongsContext();
+
+  async function onSubmit(_: Throwable<boolean>, data: EditSongSchema) {
+    const result = await saveSongDetailsAction(data);
+    if (result.isError) return result;
+    refresh();
+    return result;
+  }
+
+  const [state, action, isPending] = useActionState(onSubmit, {
     isError: false,
     value: false,
   });
@@ -91,11 +101,11 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         id="folder"
         {...form.register("folder")}
         placeholder="Enter the folder name..."
-        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
       />
       <ErrorMessage
         errors={form.formState.errors}
-        name="folder"
+        name="song"
         render={({ message }) => (
           <p className="mt-1 text-lg text-red-600">{message}</p>
         )}
@@ -113,7 +123,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
             id="song-title"
             {...form.register("title")}
             placeholder="Enter song title..."
-            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           <ErrorMessage
             errors={form.formState.errors}
@@ -135,7 +145,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
             id="subtitle"
             {...form.register("subtitle")}
             placeholder="Enter song subtitle..."
-            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
       </div>
@@ -150,7 +160,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         type="text"
         id="artist"
         placeholder="Enter artist name..."
-        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
       />
       <ErrorMessage
         errors={form.formState.errors}
@@ -170,7 +180,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
         type="text"
         id="genre"
         placeholder="e.g. Dance"
-        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-2xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
       />
       <ErrorMessage
         errors={form.formState.errors}
@@ -207,6 +217,7 @@ export function OrganizeEditor() {
     return fetch(url)
       .then((res) => res.json())
       .then((res) => {
+        setValue("folder", res.folder);
         setValue("title", res.title);
         setValue("subtitle", res.subtitle);
         setValue("artist", res.artist);

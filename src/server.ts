@@ -5,6 +5,8 @@ import {
   readdir,
   readFile,
   rename,
+  rm,
+  rmdir,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -233,6 +235,25 @@ app.get<{ collection: string }, never, never, never>(
   },
 );
 
+app.get<{ collection: string }, never, never, never>(
+  "/api/collection/delete",
+  async (req, res, next) => {
+    const parsed = createFolderSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.join(outfoxSongsDir, parsed.data.collection);
+    if (!existsSync(dir)) {
+      return next(new Error("That collection dose not exists."));
+    }
+    const dirs = await readdir(dir, { withFileTypes: true });
+    const folders = dirs.filter((dir) => dir.isDirectory());
+    if (folders.length) {
+      return next(new Error("Collection needs to be empty to delete it."));
+    }
+    await rmdir(dir);
+    return res.send();
+  },
+);
+
 function getAttributeStartLocation(content: string, attr: string): number {
   return content.indexOf(attr) + attr.length;
 }
@@ -269,7 +290,14 @@ app.get<{ collection: string; song: string }, EditSongSchema, never, never>(
     const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
     const genreIndex = getAttributeStartLocation(file, "#GENRE:");
     const genre = file.slice(genreIndex, file.indexOf(";", genreIndex));
-    return res.json({ ...parsed.data, title, subtitle, artist, genre });
+    return res.json({
+      ...parsed.data,
+      folder: parsed.data.song,
+      title,
+      subtitle,
+      artist,
+      genre,
+    });
   },
 );
 
@@ -339,6 +367,14 @@ app.post<EditSongSchema, never, never, never>(
       file.indexOf(";", genreIndex),
     );
     await writeFile(filePath, file);
+    if (parsed.data.song !== parsed.data.folder) {
+      const dest = path.resolve(
+        outfoxSongsDir,
+        parsed.data.collection,
+        parsed.data.folder,
+      );
+      await rename(dir, dest);
+    }
     return res.send();
   },
 );
@@ -474,6 +510,21 @@ app.get<
   downloadSimFile({ file, id: params.data.id, name: params.data.name });
   return res.json({ isError: false });
 });
+
+app.get<{ song: string; collection: string }>(
+  "/api/song/delete",
+  async (req, res, next) => {
+    const parsed = getSongSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
+    );
+    await rm(dir, { recursive: true });
+    return res.send();
+  },
+);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _: Request, res: Response, _next: NextFunction) => {

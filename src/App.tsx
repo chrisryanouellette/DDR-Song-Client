@@ -1,6 +1,7 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import SongDownloadsDrawer from "./components/Downloads";
 import Header from "./components/Header";
+import ToastContainer from "./components/Toast";
 import { DrawerProvider } from "./context/Dialog";
 import { DownloadsProvider } from "./context/Downloads";
 import CollectionPage from "./pages/CollectionPage";
@@ -12,6 +13,7 @@ function App() {
   return (
     <DrawerProvider>
       <DownloadsProvider>
+        <ToastContainer />
         <Router>
           <Header />
           <SongDownloadsDrawer />

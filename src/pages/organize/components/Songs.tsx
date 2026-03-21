@@ -1,14 +1,21 @@
 import {
-  RiDeleteBackLine,
   RiDeleteBin7Line,
   RiFoldersLine,
   RiMistLine,
   RiMusic2Line,
   RiRefreshLine,
 } from "@remixicon/react";
-import { Suspense, use, useDeferredValue } from "react";
+import {
+  Suspense,
+  startTransition,
+  use,
+  useActionState,
+  useDeferredValue,
+} from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { toast } from "../../../components/Toast/utils";
 import type { EditSongSchema } from "../../../schema";
+import type { Throwable } from "../../../types";
 import { cn } from "../../../utils";
 import { useSongsContext } from "../hooks/songs";
 
@@ -20,6 +27,63 @@ function OrganizeSongsContentFallback() {
       </div>
       <p>Loading folders...</p>
     </div>
+  );
+}
+
+type OrganizeSongDeleteSongButtonProps = {
+  song: string;
+};
+
+function OrganizeSongDeleteSongButton({
+  song,
+}: OrganizeSongDeleteSongButtonProps) {
+  const { getValues } = useFormContext<EditSongSchema>();
+  const { refresh } = useSongsContext();
+  async function onDeleteSong(_: Throwable, data: string): Promise<Throwable> {
+    try {
+      const collection = getValues("collection");
+      const url = new URL(`${window.location.origin}/api/song/delete`);
+      url.searchParams.append("collection", collection);
+      url.searchParams.append("song", data);
+      const response = await fetch(url);
+      if (!response.ok) {
+        const message = await response.text();
+        toast(message, "error");
+        return { isError: true, error: new Error(message) };
+      }
+      refresh();
+      return { isError: false };
+    } catch (error) {
+      toast("Something went wrong deleting the Song.", "error");
+      return {
+        isError: true,
+        error: new Error(
+          "Something went wrong when trying to delete the Song.",
+          { cause: error },
+        ),
+      };
+    }
+  }
+
+  const [state, action, isPending] = useActionState(onDeleteSong, {
+    isError: false,
+  });
+
+  return (
+    <button
+      type="button"
+      disabled={isPending}
+      className={cn(
+        "mr-2 ml-auto p-1 transition-colors hover:text-slate-900 disabled:animate-pulse",
+        state.isError && "text-red-300 hover:text-red-600",
+      )}
+      onClick={(e) => {
+        e.stopPropagation();
+        startTransition(() => action(song));
+      }}
+    >
+      <RiDeleteBin7Line />
+    </button>
   );
 }
 
@@ -65,7 +129,7 @@ function OrganizeSongsContent({
             onDragStart={(e) => handleDragStart(e, name)}
             onClick={() => handleSelectSong(name)}
             className={cn(
-              "flex w-full cursor-grab items-center rounded-lg px-4 py-3 text-left font-bold font-mono text-xl transition-all active:cursor-grabbing",
+              "flex w-full cursor-grab items-center rounded-lg px-4 py-3 text-left font-bold font-mono text-2xl transition-all active:cursor-grabbing",
               selectedSongId === name
                 ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
                 : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
@@ -73,12 +137,7 @@ function OrganizeSongsContent({
           >
             {name}
             {selectedSongId === name ? (
-              <button
-                type="button"
-                className="mr-2 ml-auto hover:text-slate-900"
-              >
-                <RiDeleteBin7Line />
-              </button>
+              <OrganizeSongDeleteSongButton song={name} />
             ) : null}
           </button>
         ))

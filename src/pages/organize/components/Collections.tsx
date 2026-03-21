@@ -1,8 +1,17 @@
 import { RiDeleteBin7Line, RiFoldersLine } from "@remixicon/react";
-import { type DragEvent, Suspense, use, useState } from "react";
+import {
+  type DragEvent,
+  Suspense,
+  startTransition,
+  use,
+  useActionState,
+  useState,
+} from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { toast } from "../../../components/Toast/utils";
 import { useDrawer } from "../../../context/Dialog/hooks";
 import type { EditSongSchema } from "../../../schema";
+import type { Throwable } from "../../../types";
 import { cn } from "../../../utils";
 import { useCollectionsContext } from "../hooks/collections";
 import { useSongsContext } from "../hooks/songs";
@@ -15,6 +24,63 @@ function OrganizeCollectionsContentFallback() {
       </div>
       <p className="text-xl">Loading folders...</p>
     </div>
+  );
+}
+
+type OrganizeCollectionDeleteCollectionButtonProps = {
+  collection: string;
+};
+
+function OrganizeCollectionDeleteCollectionButton({
+  collection,
+}: OrganizeCollectionDeleteCollectionButtonProps) {
+  const { refresh } = useCollectionsContext();
+  async function onDeleteCollection(
+    _: Throwable,
+    data: string,
+  ): Promise<Throwable> {
+    try {
+      const url = new URL(`${window.location.origin}/api/collection/delete`);
+      url.searchParams.append("collection", data);
+      const response = await fetch(url);
+      if (!response.ok) {
+        const message = await response.text();
+        toast(message, "error");
+        return { isError: true, error: new Error(message) };
+      }
+      refresh();
+      return { isError: false };
+    } catch (error) {
+      toast("Something went wrong deleting the collection.", "error");
+      return {
+        isError: true,
+        error: new Error(
+          "Something went wrong when trying to delete the collection.",
+          { cause: error },
+        ),
+      };
+    }
+  }
+
+  const [state, action, isPending] = useActionState(onDeleteCollection, {
+    isError: false,
+  });
+
+  return (
+    <button
+      type="button"
+      disabled={isPending}
+      className={cn(
+        "mr-2 ml-auto p-1 transition-colors hover:text-slate-900 disabled:animate-pulse",
+        state.isError && "text-red-300 hover:text-red-600",
+      )}
+      onClick={(e) => {
+        e.stopPropagation();
+        startTransition(() => action(collection));
+      }}
+    >
+      <RiDeleteBin7Line />
+    </button>
   );
 }
 
@@ -79,7 +145,7 @@ function OrganizeCollectionsContent({
       onDragLeave={handleDragLeave}
       onDrop={(e) => handleDrop(e, name)}
       className={cn(
-        "relative flex w-full items-center rounded-lg px-4 py-4 text-left font-mono text-xl transition-all",
+        "group relative flex w-full items-center rounded-lg px-4 py-4 text-left font-bold font-mono text-2xl transition-all",
         selectedCollectionId === name
           ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
           : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
@@ -89,12 +155,7 @@ function OrganizeCollectionsContent({
     >
       {name}
       {selectedCollectionId === name ? (
-        <button
-          type="button"
-          className="mr-2 ml-auto transition-colors hover:text-slate-900"
-        >
-          <RiDeleteBin7Line />
-        </button>
+        <OrganizeCollectionDeleteCollectionButton collection={name} />
       ) : null}
       {dragOverCollectionId === name && (
         <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-purple-500/25" />
