@@ -22,6 +22,7 @@ import express, {
   type Request,
   type Response,
 } from "express";
+import open from "open";
 import {
   createFolderSchema,
   type EditSongSchema,
@@ -536,6 +537,11 @@ app.use((err: unknown, _: Request, res: Response, _next: NextFunction) => {
   return res.status(500).send("Internal Server Error");
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server running on port ${port}`);
+  try {
+    await fetch("http://localhost:5173");
+  } catch {
+    open("http://localhost:3000");
+  }
 });
