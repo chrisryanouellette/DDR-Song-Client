@@ -145,7 +145,6 @@ app.get<{ id: string }, SongDetails, never, never>(
     const downloaded = file.value;
     const [collection, song] =
       downloaded?.replace(`${outfoxSongsDir}/`, "").split("/") ?? [];
-    console.log(collection, song);
     const result = await fetch(url);
     const html = await result.text();
     const $ = cheerio.load(html);
@@ -662,7 +661,8 @@ app.get("/api/audio/*rest", async (req, res) => {
 });
 
 app.use((_, res) => {
-  res.sendFile(distDir);
+  console.log(publicDir);
+  res.sendFile(`${publicDir}/index.html`);
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
