@@ -142,7 +142,10 @@ app.get<{ id: string }, SongDetails, never, never>(
     url.searchParams.append("simfileid", params.data.id);
     const files = await glob(`${outfoxSongsDir}/**/*${params.data.id}.json`);
     const file = await files.next();
-    const downloaded = !!file.value;
+    const downloaded = file.value;
+    const [collection, song] =
+      downloaded?.replace(`${outfoxSongsDir}/`, "").split("/") ?? [];
+    console.log(collection, song);
     const result = await fetch(url);
     const html = await result.text();
     const $ = cheerio.load(html);
@@ -202,7 +205,8 @@ app.get<{ id: string }, SongDetails, never, never>(
     return res.json({
       bpm,
       preview,
-      downloaded,
+      collection,
+      song,
       id: params.data.id,
       quality: { audio, banner, background },
     });
@@ -428,7 +432,7 @@ app.post<EditSongSchema, never, never, never>(
     file = inject(file, "#ARTIST:", parsed.data.artist);
     file = inject(file, "#GENRE:", parsed.data.genre);
     await writeFile(filePath, file);
-    const folder = [parsed.data.title, parsed.data.subtitle]
+    const folder = [parsed.data.title, parsed.data.subtitle, parsed.data.artist]
       .filter(Boolean)
       .join(" - ");
     if (parsed.data.song !== folder) {
@@ -531,7 +535,12 @@ async function downloadSimFile({
     });
     webReadable.on("end", () => {
       const data: SongDownloadProgressSchema = {
-        [id]: { completed: true, name, collection },
+        [id]: {
+          completed: true,
+          name,
+          collection,
+          completedAt: Date.now(),
+        },
       };
       const message = JSON.stringify(data);
       for (const client of clients) {

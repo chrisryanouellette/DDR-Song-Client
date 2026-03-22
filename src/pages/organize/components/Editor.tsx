@@ -10,10 +10,16 @@ import {
   useState,
   useTransition,
 } from "react";
+import {
+  ErrorBoundary,
+  type FallbackProps,
+  getErrorMessage,
+} from "react-error-boundary";
 import { useFormContext, useWatch } from "react-hook-form";
 import Difficulty from "../../../components/Song/Difficulty";
 import type { EditSongApiResponse, EditSongSchema } from "../../../schema";
 import type { Throwable } from "../../../types";
+import { EditorContextProvider } from "../context/Editor";
 import { useEditorContext } from "../hooks/editor";
 import { useSongsContext } from "../hooks/songs";
 
@@ -39,7 +45,33 @@ const genres = [
   "Synth-Pop, Retro-80s",
 ];
 
-function OrganizeEditorContentFallback() {
+function OrganizeEditorContentFallback({
+  error,
+  resetErrorBoundary,
+}: FallbackProps) {
+  const { setValue } = useFormContext<EditSongSchema>();
+  function handleReset() {
+    setValue("song", "");
+    resetErrorBoundary();
+  }
+  return (
+    <div className="flex flex-1 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-8 shadow-2xl backdrop-blur-sm transition-all">
+      <h2 className="mb-8 font-bold text-5xl text-slate-100 uppercase tracking-wide">
+        Editor
+      </h2>
+      {getErrorMessage(error) || "Unknown Error"}
+      <button
+        type="button"
+        className="mt-8 w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        onClick={handleReset}
+      >
+        Reset Editor
+      </button>
+    </div>
+  );
+}
+
+function OrganizeEditorFormFallback() {
   return (
     <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
       <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
@@ -182,7 +214,7 @@ type OrganizeEditorContentProps = {
   promise: Promise<EditSongApiResponse | undefined>;
 };
 
-function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
+function OrganizeEditorForm({ promise }: OrganizeEditorContentProps) {
   const song = use(promise);
   const form = useFormContext<EditSongSchema>();
   const { refresh } = useSongsContext();
@@ -203,7 +235,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
 
   if (!state.isError && state.value) {
     return (
-      <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
+      <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 px-8 text-slate-500 italic">
         <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
           <RiMusic2Line className="size-32" />
         </div>
@@ -214,7 +246,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
 
   return (
     <form
-      className="flex flex-1 flex-col overflow-auto pr-4"
+      className="flex flex-1 flex-col overflow-auto px-8"
       onSubmit={form.handleSubmit(
         (data) => startTransition(() => action(data)),
         console.error,
@@ -315,13 +347,13 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
   );
 }
 
-export function OrganizeEditor() {
+function OrganizeEditorContent() {
   const selectedSongId = useWatch<EditSongSchema>({ name: "song" });
   const { prom } = useEditorContext();
 
   return (
-    <div className="flex flex-1 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-8 shadow-2xl backdrop-blur-sm transition-all">
-      <div className="mb-8 flex flex-wrap justify-between gap-y-4">
+    <div className="flex flex-1 flex-col rounded-xl border border-slate-700 bg-slate-800/20 py-8 shadow-2xl backdrop-blur-sm transition-all">
+      <div className="mb-8 flex flex-wrap justify-between gap-y-4 px-8">
         <h2 className="font-bold text-5xl text-slate-100 uppercase tracking-wide">
           Editor
         </h2>
@@ -333,8 +365,8 @@ export function OrganizeEditor() {
       </div>
 
       {selectedSongId ? (
-        <Suspense fallback={<OrganizeEditorContentFallback />}>
-          <OrganizeEditorContent key={selectedSongId} promise={prom} />
+        <Suspense fallback={<OrganizeEditorFormFallback />}>
+          <OrganizeEditorForm key={selectedSongId} promise={prom} />
         </Suspense>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
@@ -345,5 +377,15 @@ export function OrganizeEditor() {
         </div>
       )}
     </div>
+  );
+}
+
+export function OrganizeEditor() {
+  return (
+    <ErrorBoundary FallbackComponent={OrganizeEditorContentFallback}>
+      <EditorContextProvider>
+        <OrganizeEditorContent />
+      </EditorContextProvider>
+    </ErrorBoundary>
   );
 }

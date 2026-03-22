@@ -7,6 +7,17 @@ import {
 export function useDownloadProgress() {
   const [downloads, setDownloads] = useState<SongDownloadProgressSchema>({});
 
+  function clearCompleted() {
+    setDownloads(prev => {
+      const notComplete: SongDownloadProgressSchema = {}
+      for(const [key, value] of Object.entries(prev)) {
+        if(('completed' in value)) continue
+        notComplete[key] = value
+      }
+      return notComplete
+    })
+  }
+
   useEffect(function initDownloadEvents() {
     const evtSource = new EventSource("/api/song/progress");
     evtSource.onmessage = (event) => {
@@ -35,5 +46,5 @@ export function useDownloadProgress() {
     };
   }, []);
 
-  return downloads;
+  return {downloads, clearCompleted};
 }

@@ -30,7 +30,8 @@ export type SongDetails = {
   id: string;
   bpm: string;
   preview?: string;
-  downloaded: boolean;
+  collection?: string;
+  song?: string;
   quality: {
     audio: 0 | 1 | 2 | "unknown";
     banner: 0 | 1 | 2 | "unknown" | "custom";

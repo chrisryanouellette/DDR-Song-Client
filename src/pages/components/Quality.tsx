@@ -18,18 +18,24 @@ export function QualityFallback({
     <>
       <RiMusic2Line
         {...musicProps}
-        className={cn("animate-pulse text-gray-700", musicProps?.className)}
+        className={cn(
+          "size-9 animate-pulse text-gray-700",
+          musicProps?.className,
+        )}
       />
       <RiImage2Line
         {...backgroundProps}
         className={cn(
-          "animate-pulse text-gray-700",
+          "size-9 animate-pulse text-gray-700",
           backgroundProps?.className,
         )}
       />
       <RiVideoLine
         {...bannerProps}
-        className={cn("animate-pulse text-gray-700", bannerProps?.className)}
+        className={cn(
+          "size-9 animate-pulse text-gray-700",
+          bannerProps?.className,
+        )}
       />
     </>
   );

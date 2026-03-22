@@ -1,5 +1,6 @@
 import {
   RiCheckboxCircleLine,
+  RiCloseLine,
   RiDownload2Line,
   RiErrorWarningLine,
 } from "@remixicon/react";
@@ -10,14 +11,15 @@ import Drawer from "../Drawer";
 
 export default function SongDownloadsDrawer() {
   const { closeDrawer } = useDrawer();
-  const downloads = useSongDownloadsContext();
+  const { downloads, clearCompleted } = useSongDownloadsContext();
 
   const activeDownloads = Object.entries(downloads).filter(
     ([, value]) => !("completed" in value) && !("error" in value),
   );
-  const completedDownloads = Object.entries(downloads).filter(
-    ([, value]) => "completed" in value,
-  );
+  const completedDownloads = Object.entries(downloads)
+    .filter(([, value]) => "completed" in value)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .sort((a, b) => (b[1] as any).completedAt - (a[1] as any).completedAt);
   const failedDownloads = Object.entries(downloads).filter(
     ([, value]) => "error" in value,
   );
@@ -80,8 +82,15 @@ export default function SongDownloadsDrawer() {
 
         {!!completedDownloads.length && (
           <section>
-            <h3 className="mb-4 font-bold text-slate-500 text-sm uppercase tracking-wider">
+            <h3 className="mb-4 flex items-center justify-between font-bold text-slate-500 text-sm uppercase tracking-wider">
               Completed
+              <button
+                type="button"
+                className="hover:text-slate-900"
+                onClick={clearCompleted}
+              >
+                <RiCloseLine />
+              </button>
             </h3>
             <div className="space-y-3">
               {completedDownloads.map(([id, { name, collection }]) => (

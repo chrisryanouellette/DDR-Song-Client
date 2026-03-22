@@ -46,7 +46,10 @@ export const songDownloadProgressSchema = z.record(
         z.object({
           progress: z.number().min(0),
         }),
-        z.object({ completed: z.literal(true) }),
+        z.object({
+          completed: z.literal(true),
+          completedAt: z.number(),
+        }),
         z.object({ error: z.string() }),
       ]),
     ),
