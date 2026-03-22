@@ -12,7 +12,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
-import path, { dirname } from "node:path";
+import path from "node:path";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 import type { ReadableStream } from "node:stream/web";
@@ -46,8 +46,10 @@ import type { SearchSong, Song, SongDetails, Throwable } from "./types.ts";
 const app = express();
 const port = 3000;
 const platform = os.platform();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const directory =
+  typeof __dirname !== "undefined"
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
 const outfoxDirectories = {
   linux: path.resolve(os.homedir(), ".project-outfox"),
   darwin: path.resolve(os.homedir(), "/Applications/OutFox/"),
@@ -68,8 +70,8 @@ if (!existsSync(outfoxDirectory)) {
 
 const outfoxSongsDir = path.resolve(outfoxDirectory, "./Songs");
 
-const distDir = path.join(__dirname, "/dist");
-const publicDir = existsSync(distDir) ? distDir : __dirname;
+const distDir = path.join(directory, "/dist");
+const publicDir = existsSync(distDir) ? distDir : directory;
 app.use("/", express.static(publicDir));
 
 app.get("/api/search", async (req, res, next) => {
