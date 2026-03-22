@@ -39,15 +39,17 @@ export const songDownloadSchema = z
 
 export const songDownloadProgressSchema = z.record(
   z.string(),
-  z.object({ name: z.string().nonempty() }).and(
-    z.union([
-      z.object({
-        progress: z.number().min(0),
-      }),
-      z.object({ completed: z.literal(true) }),
-      z.object({ error: z.string() }),
-    ]),
-  ),
+  z
+    .object({ name: z.string().nonempty(), collection: z.string().nonempty() })
+    .and(
+      z.union([
+        z.object({
+          progress: z.number().min(0),
+        }),
+        z.object({ completed: z.literal(true) }),
+        z.object({ error: z.string() }),
+      ]),
+    ),
 );
 export type SongDownloadProgressSchema = z.infer<
   typeof songDownloadProgressSchema

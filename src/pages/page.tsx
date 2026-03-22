@@ -1,6 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RiDownload2Line, RiLoader2Fill } from "@remixicon/react";
-import { Suspense, startTransition, useActionState, useState } from "react";
+import { RiCloseLine, RiLoader2Fill } from "@remixicon/react";
+import {
+  Suspense,
+  startTransition,
+  useActionState,
+  useRef,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import SongCard from "../components/Cards/Songs";
@@ -9,6 +15,10 @@ import Difficulty from "../components/Song/Difficulty";
 import { searchSchema } from "../schema";
 import type { SearchSong } from "../types";
 import { Bpm, BpmFallback } from "./components/Bpm";
+import {
+  DownloadButton,
+  DownloadButtonFallback,
+} from "./components/DowloadButton";
 import { Download, DownloadFallback } from "./components/Download";
 import { Grade } from "./components/Grade";
 import { Preview, PreviewFallback } from "./components/Prewiew";
@@ -19,7 +29,6 @@ import { SongDetailsProvider } from "./context/Song";
 type SearchInputs = z.infer<typeof searchSchema>;
 
 async function searchAction(_: SearchSong[] | null, data: SearchInputs) {
-  window.scrollTo({ top: 0, behavior: "smooth" });
   const url = new URL(`${window.location.origin}/api/search`);
   if ("songtitle" in data) {
     url.searchParams.append("songtitle", data.songtitle);
@@ -43,6 +52,7 @@ function IndexPage() {
   } = useForm<SearchInputs>({
     resolver: zodResolver(searchSchema),
   });
+  const containerRef = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [search, action, isPending] = useActionState(searchAction, null);
   const [download, setDownload] = useState<{ name: string; id: string } | null>(
@@ -50,6 +60,7 @@ function IndexPage() {
   );
 
   function handleSelectSong(song: string) {
+    containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     const current = getValues("songtitle");
     setValue("songtitle", song);
     setValue("songartist", "");
@@ -61,6 +72,7 @@ function IndexPage() {
   }
 
   function handleSelectArtist(artist: string) {
+    containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     const current = getValues("songartist");
     setValue("songtitle", "");
     setValue("songartist", artist);
@@ -76,7 +88,7 @@ function IndexPage() {
   }
 
   return (
-    <div className="px-16">
+    <div className="overflow-auto px-16 pb-4" ref={containerRef}>
       <form
         className="flex flex-wrap items-center gap-y-4 rounded-lg"
         onSubmit={handleSubmit(
@@ -91,13 +103,22 @@ function IndexPage() {
           >
             Song Title
           </label>
-          <input
-            id="song-title"
-            {...register("songtitle")}
-            type="text"
-            placeholder="Search by song title..."
-            className="col-start-1 flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-r-none"
-          />
+          <div className="relative flex w-full">
+            <input
+              id="song-title"
+              {...register("songtitle")}
+              type="text"
+              placeholder="Search by song title..."
+              className="flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-r-none"
+            />
+            <button
+              type="button"
+              className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-white hover:text-black"
+              onClick={() => setValue("songtitle", "")}
+            >
+              <RiCloseLine />
+            </button>
+          </div>
         </div>
         <div className="flex flex-1 flex-col gap-y-2">
           <label
@@ -106,13 +127,22 @@ function IndexPage() {
           >
             Artist Name
           </label>
-          <input
-            id="artist-name"
-            {...register("songartist")}
-            type="text"
-            placeholder="Search by artist name..."
-            className="flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-l-none"
-          />
+          <div className="relative flex w-full">
+            <input
+              id="artist-name"
+              {...register("songartist")}
+              type="text"
+              placeholder="Search by artist name..."
+              className="flex-1 rounded-r-lg rounded-l-lg border border-slate-500 bg-transparent px-4 py-3 font-mono text-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:rounded-l-none"
+            />
+            <button
+              type="button"
+              className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-white hover:text-black"
+              onClick={() => setValue("songartist", "")}
+            >
+              <RiCloseLine />
+            </button>
+          </div>
         </div>
         <button
           type="submit"
@@ -128,7 +158,6 @@ function IndexPage() {
         {"songtitle" in errors || "songartist" in errors ? (
           <p className="basis-full text-3xl text-red-500">
             {"songtitle" in errors ? errors.songtitle?.message : null}
-            {"songartist" in errors ? errors.songartist?.message : null}
           </p>
         ) : null}
       </form>
@@ -154,13 +183,11 @@ function IndexPage() {
                   <Suspense fallback={<PreviewFallback />}>
                     <Preview onClickPreview={setPreview} />
                   </Suspense>
-                  <button
-                    type="button"
-                    className="mt-1 h-min shrink-0 cursor-pointer"
-                    onClick={() => handleDownload(song.id, song.title)}
-                  >
-                    <RiDownload2Line className="size-8 pressed:fill-purple-500 transition-colors hover:fill-purple-500" />
-                  </button>
+                  <Suspense fallback={<DownloadButtonFallback />}>
+                    <DownloadButton
+                      onClick={() => handleDownload(song.id, song.title)}
+                    />
+                  </Suspense>
                   <Suspense>
                     <Grade single={song.single} double={song.double} />
                   </Suspense>

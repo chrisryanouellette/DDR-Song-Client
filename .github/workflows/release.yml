@@ -30,9 +30,9 @@ jobs:
 
       - name: Package build artifacts
         run: |
-          mkdir -p build
-          cp -r dist/* build/
-          zip -r DDR-Song-Client.zip build/
+          mkdir -p DDR-Song-Client
+          cp -r dist/* DDR-Song-Client/
+          zip -r DDR-Song-Client.zip DDR-Song-Client/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

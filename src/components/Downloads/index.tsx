@@ -84,11 +84,12 @@ export default function SongDownloadsDrawer() {
               Completed
             </h3>
             <div className="space-y-3">
-              {completedDownloads.map(([id, { name }]) => (
+              {completedDownloads.map(([id, { name, collection }]) => (
                 <Link
                   key={id}
-                  to={`/song/${id}`}
+                  to={`/organize?song=${name}&collection=${collection}`}
                   className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3 text-slate-600 transition-colors hover:bg-purple-200 hover:text-slate-800"
+                  onClick={closeDrawer}
                 >
                   <span className="truncate font-medium">{name}</span>
                   <RiCheckboxCircleLine className="size-5 shrink-0 text-green-500" />

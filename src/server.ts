@@ -1,5 +1,6 @@
 import { createReadStream, createWriteStream, existsSync } from "node:fs";
 import {
+  glob,
   mkdir,
   readdir,
   readFile,
@@ -139,6 +140,9 @@ app.get<{ id: string }, SongDetails, never, never>(
     if (params.error) return next(params.error);
     const url = new URL("https://zenius-i-vanisher.com/v5.2/viewsimfile.php");
     url.searchParams.append("simfileid", params.data.id);
+    const files = await glob(`${outfoxSongsDir}/**/*${params.data.id}.json`);
+    const file = await files.next();
+    const downloaded = !!file.value;
     const result = await fetch(url);
     const html = await result.text();
     const $ = cheerio.load(html);
@@ -198,6 +202,7 @@ app.get<{ id: string }, SongDetails, never, never>(
     return res.json({
       bpm,
       preview,
+      downloaded,
       id: params.data.id,
       quality: { audio, banner, background },
     });
@@ -423,12 +428,11 @@ app.post<EditSongSchema, never, never, never>(
     file = inject(file, "#ARTIST:", parsed.data.artist);
     file = inject(file, "#GENRE:", parsed.data.genre);
     await writeFile(filePath, file);
-    if (parsed.data.song !== parsed.data.title) {
-      const dest = path.resolve(
-        outfoxSongsDir,
-        parsed.data.collection,
-        parsed.data.title,
-      );
+    const folder = [parsed.data.title, parsed.data.subtitle]
+      .filter(Boolean)
+      .join(" - ");
+    if (parsed.data.song !== folder) {
+      const dest = path.resolve(outfoxSongsDir, parsed.data.collection, folder);
       await rename(dir, dest);
     }
     return res.send();
@@ -487,10 +491,12 @@ async function downloadSimFile({
   file,
   name,
   id,
+  collection,
 }: {
   file: string;
   name: string;
   id: string;
+  collection: string;
 }): Promise<void> {
   const url = new URL("https://zenius-i-vanisher.com/v5.2/download.php");
   url.searchParams.append("type", "ddrsimfile");
@@ -516,7 +522,7 @@ async function downloadSimFile({
       if (amount <= previous) return;
       previous = amount;
       const data: SongDownloadProgressSchema = {
-        [id]: { progress: amount, name },
+        [id]: { progress: amount, name, collection },
       };
       const message = JSON.stringify(data);
       for (const client of clients) {
@@ -525,7 +531,7 @@ async function downloadSimFile({
     });
     webReadable.on("end", () => {
       const data: SongDownloadProgressSchema = {
-        [id]: { completed: true, name },
+        [id]: { completed: true, name, collection },
       };
       const message = JSON.stringify(data);
       for (const client of clients) {
@@ -571,11 +577,10 @@ app.get<
   const params = songDownloadSchema.safeParse(req.query);
   if (params.error) return next(params.error);
 
-  const dir = path.resolve(
-    outfoxSongsDir,
+  const collection =
     decodeURIComponent(params.data.folder) ||
-      decodeURIComponent(params.data.new),
-  );
+    decodeURIComponent(params.data.new);
+  const dir = path.resolve(outfoxSongsDir, collection);
   const result = path.resolve(dir, `${decodeURIComponent(params.data.name)}`);
   const file = `${result}.zip`;
   if (params.data.new) {
@@ -591,7 +596,12 @@ app.get<
     );
   if (existsSync(file))
     return next(new Error("Download is already in progress."));
-  downloadSimFile({ file, id: params.data.id, name: params.data.name });
+  downloadSimFile({
+    file,
+    collection,
+    id: params.data.id,
+    name: params.data.name,
+  });
   return res.json({ isError: false });
 });
 
