@@ -2,7 +2,9 @@ import { useState } from "react";
 import Dialog from "../Dialog";
 
 export function FullscreenDialog() {
-  const [isOpen, setIsOpen] = useState(!document.fullscreenElement);
+  const [isOpen, setIsOpen] = useState(
+    !document.fullscreenElement && import.meta.env.MODE === "production",
+  );
 
   return (
     <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>

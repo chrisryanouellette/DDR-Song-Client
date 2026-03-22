@@ -17,7 +17,10 @@ function Difficulty({
       <h3 className="mr-4 font-medium text-2xl text-slate-300">{children}</h3>
       {difficulty.slice(0, 5).map((option, index) => (
         <p
-          key={option}
+          key={`${option === "-" ? "X" : option}-${
+            // biome-ignore lint/suspicious/noArrayIndexKey: <Key is needed to break on re-rendering>
+            index
+          }`}
           className={`font-medium after:px-0.5 after:pl-1 after:text-slate-400 after:content-['-'] last:after:content-[''] ${
             index < difficulty.length / 3
               ? "text-green-400"

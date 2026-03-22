@@ -53,6 +53,21 @@ export type SongDownloadProgressSchema = z.infer<
   typeof songDownloadProgressSchema
 >;
 
+export const editSongApiResponse = z.object({
+  collection: z.string().nonempty("Collection is required."),
+  song: z.string().nonempty("Song is required."),
+  title: z.string().nonempty("Title is required."),
+  subtitle: z.string().optional(),
+  artist: z.string().nonempty("Artist is required."),
+  genre: z.string().nonempty("Genre is required."),
+  music: z.string().nonempty(),
+  bpm: z.string().nonempty(),
+  grades: z.record(z.string(), z.number()),
+  files: z.array(z.string()),
+});
+
+export type EditSongApiResponse = z.infer<typeof editSongApiResponse>;
+
 export const editSongSchema = z.object({
   collection: z.string().nonempty("Collection is required."),
   song: z.string().nonempty("Song is required."),
@@ -68,13 +83,23 @@ export const createFolderSchema = z.object({
   collection: z.string().nonempty(),
 });
 export const listSongsSchema = z.object({ collection: z.string().nonempty() });
-export const getSongSchema = z.object({
+export const getSongApiSchema = z.object({
   collection: z.string().nonempty(),
   song: z.string().nonempty(),
 });
+
+export type GetSongApiSchema = z.infer<typeof getSongApiSchema>;
 
 export const moveSongSchema = z.object({
   collection: z.string().nonempty(),
   dest: z.string().nonempty(),
   song: z.string().nonempty(),
 });
+
+export const updateAudioSchema = z.object({
+  collection: z.string().nonempty(),
+  song: z.string().nonempty(),
+  file: z.string().nonempty(),
+});
+
+export type UpdateAudioSchema = z.infer<typeof updateAudioSchema>;

@@ -27,15 +27,19 @@ import express, {
 import open from "open";
 import {
   createFolderSchema,
+  type EditSongApiResponse,
   type EditSongSchema,
   editSongSchema,
-  getSongSchema,
+  type GetSongApiSchema,
+  getSongApiSchema,
   listSongsSchema,
   moveSongSchema,
   type SongDownloadProgressSchema,
   searchSchema,
   songDetailsSchema,
   songDownloadSchema,
+  type UpdateAudioSchema,
+  updateAudioSchema,
 } from "./schema.ts";
 import type { SearchSong, Song, SongDetails, Throwable } from "./types.ts";
 
@@ -261,57 +265,117 @@ app.get<{ collection: string }, never, never, never>(
   },
 );
 
-function getAttributeStartLocation(content: string, attr: string): number {
-  const index = content.indexOf(attr);
+function getAttributeStartLocation(
+  content: string,
+  attr: string,
+  start?: number,
+): number {
+  const index = content.indexOf(attr, start ?? 0);
   if (index === -1) return -1;
   return index + attr.length;
 }
 
-app.get<
-  { collection: string; song: string },
-  EditSongSchema & { music: string },
-  never,
-  never
->("/api/song/editor", async (req, res, next) => {
-  const parsed = getSongSchema.safeParse(req.query);
-  if (parsed.error) return next(parsed.error);
-  const dir = path.resolve(
-    outfoxSongsDir,
-    parsed.data.collection,
-    parsed.data.song,
-  );
-  let filePath: string = "";
-  for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
-    if (filePath.includes(".ssc")) continue;
-    filePath = entry;
-  }
-  if (!filePath) {
-    return next(
-      new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
+app.get<GetSongApiSchema, EditSongApiResponse>(
+  "/api/song/editor",
+  async (req, res, next) => {
+    const parsed = getSongApiSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
     );
-  }
-  const file = (await readFile(filePath)).toString();
-  const titleIndex = getAttributeStartLocation(file, "#TITLE:");
-  const title = file.slice(titleIndex, file.indexOf(";", titleIndex));
-  const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
-  const subtitle = file.slice(subtitleIndex, file.indexOf(";", subtitleIndex));
-  const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
-  const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
-  const genreIndex = getAttributeStartLocation(file, "#GENRE:");
-  const genre = genreIndex
-    ? file.slice(genreIndex, file.indexOf(";", genreIndex))
-    : "";
-  const musicIndex = getAttributeStartLocation(file, "#MUSIC:");
-  const music = file.slice(musicIndex, file.indexOf(";", musicIndex));
-  return res.json({
-    ...parsed.data,
-    title,
-    subtitle,
-    artist,
-    genre,
-    music,
-  });
-});
+    let filePath: string = "";
+    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+      if (filePath.includes(".ssc")) continue;
+      filePath = entry;
+    }
+    if (!filePath) {
+      return next(
+        new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
+      );
+    }
+    const file = (await readFile(filePath)).toString();
+    const files = await readdir(dir);
+    const titleIndex = getAttributeStartLocation(file, "#TITLE:");
+    const title = file.slice(titleIndex, file.indexOf(";", titleIndex));
+    const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
+    const subtitle = file.slice(
+      subtitleIndex,
+      file.indexOf(";", subtitleIndex),
+    );
+    const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
+    const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
+    const genreIndex = getAttributeStartLocation(file, "#GENRE:");
+    const genre = genreIndex
+      ? file.slice(genreIndex, file.indexOf(";", genreIndex))
+      : "";
+    const musicIndex = getAttributeStartLocation(file, "#MUSIC:");
+    const music = file.slice(musicIndex, file.indexOf(";", musicIndex));
+    const bpmIndex = getAttributeStartLocation(file, "#BPMS:");
+    const bpmText = file.slice(bpmIndex, file.indexOf(";", bpmIndex));
+    const bpmSet = new Set(
+      bpmText.split(",").map((line) => Math.round(Number(line.split("=")[1]))),
+    );
+    const bpm = [...bpmSet].join(", ");
+    const isSmFile = filePath.endsWith(".sm");
+    const grades: { [index: string]: number } = {};
+    if (isSmFile) {
+      let singleIndex = getAttributeStartLocation(file, "dance-single:");
+      while (singleIndex !== -1) {
+        const slice = file.slice(singleIndex, singleIndex + 100);
+        const [, difficulty, grade] = slice
+          .split("     ")
+          .filter((i) => !!i.trim());
+        grades[difficulty.trim().replace(":", "")] = Number(
+          grade.trim().replace(":", ""),
+        );
+        singleIndex = getAttributeStartLocation(
+          file,
+          "dance-single:",
+          singleIndex,
+        );
+      }
+    } else {
+      let singleIndex = getAttributeStartLocation(
+        file,
+        "#STEPSTYPE:dance-single;",
+      );
+      let meterIndex = getAttributeStartLocation(file, "#METER:");
+      let difficultyIndex = getAttributeStartLocation(file, "#DIFFICULTY:");
+      while (singleIndex !== -1) {
+        const meterEnd = file.indexOf(";", meterIndex);
+        const difficultyEnd = file.indexOf(";", difficultyIndex);
+        const grade = file.slice(meterIndex, meterEnd);
+        const difficulty = file.slice(difficultyIndex, difficultyEnd);
+        meterIndex = getAttributeStartLocation(file, "#METER:", meterEnd);
+        difficultyIndex = getAttributeStartLocation(
+          file,
+          "#DIFFICULTY:",
+          difficultyEnd,
+        );
+        singleIndex = getAttributeStartLocation(
+          file,
+          "#STEPSTYPE:dance-single;",
+          singleIndex,
+        );
+        grades[difficulty] = Number(grade);
+      }
+    }
+
+    return res.json({
+      ...parsed.data,
+      title,
+      subtitle,
+      artist,
+      genre,
+      music,
+      bpm,
+      grades,
+      files,
+    });
+  },
+);
 
 function inject(file: string, section: string, update: string) {
   const start = getAttributeStartLocation(file, section);
@@ -367,7 +431,7 @@ app.post<EditSongSchema, never, never, never>(
   },
 );
 
-app.get<{ collection: string; song: string }, never, never, never>(
+app.get<GetSongApiSchema, never, never, never>(
   "/api/song/move",
   async (req, res, next) => {
     const parsed = moveSongSchema.safeParse(req.query);
@@ -384,6 +448,33 @@ app.get<{ collection: string; song: string }, never, never, never>(
     );
     await rename(current, dest);
     res.send();
+  },
+);
+
+app.get<UpdateAudioSchema>(
+  "/api/editor/audio/update",
+  async (req, res, next) => {
+    const parsed = updateAudioSchema.safeParse(req.query);
+    if (parsed.error) return next(parsed.error);
+    const dir = path.resolve(
+      outfoxSongsDir,
+      parsed.data.collection,
+      parsed.data.song,
+    );
+    let filePath: string = "";
+    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+      if (filePath.includes(".ssc")) continue;
+      filePath = entry;
+    }
+    if (!filePath) {
+      return next(
+        new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
+      );
+    }
+    let file = (await readFile(filePath)).toString();
+    file = inject(file, "#MUSIC:", parsed.data.file);
+    await writeFile(filePath, file);
+    return res.send();
   },
 );
 
@@ -502,7 +593,7 @@ app.get<
 app.get<{ song: string; collection: string }>(
   "/api/song/delete",
   async (req, res, next) => {
-    const parsed = getSongSchema.safeParse(req.query);
+    const parsed = getSongApiSchema.safeParse(req.query);
     if (parsed.error) return next(parsed.error);
     const dir = path.resolve(
       outfoxSongsDir,
@@ -516,6 +607,9 @@ app.get<{ song: string; collection: string }>(
 
 app.get("/api/audio/*rest", async (req, res) => {
   const filePath = path.resolve(outfoxSongsDir, req.params.rest.join("/"));
+  if (!existsSync(filePath)) {
+    return res.status(404).send("Audio file not found.");
+  }
   const stats = await stat(filePath);
   const fileSize = stats.size;
   const range = req.headers.range;
@@ -531,14 +625,13 @@ app.get("/api/audio/*rest", async (req, res) => {
       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
       "Accept-Ranges": "bytes",
       "Content-Length": chunksize,
-      "Content-Type": "audio/mpeg",
+      "Content-Type": "audio",
     });
     file.pipe(res);
   } else {
-    // If no range, send full file
     res.writeHead(200, {
       "Content-Length": fileSize,
-      "Content-Type": "audio/mpeg",
+      "Content-Type": "audio",
     });
     createReadStream(filePath).pipe(res);
   }

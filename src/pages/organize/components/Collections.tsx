@@ -169,18 +169,18 @@ export default function OrganizeCollections() {
   const { openDrawer } = useDrawer();
 
   return (
-    <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
-      <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase">
+    <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 py-4 shadow-2xl backdrop-blur-sm">
+      <h2 className="mb-4 flex items-center px-4 font-bold text-2xl text-slate-100 uppercase">
         Collections
       </h2>
-      <div className="mb-8 flex flex-1 flex-col space-y-2 overflow-auto pr-2">
+      <div className="mb-8 flex flex-1 flex-col space-y-2 overflow-auto px-4">
         <Suspense fallback={<OrganizeCollectionsContentFallback />}>
           <OrganizeCollectionsContent promise={prom} />
         </Suspense>
       </div>
       <button
         type="button"
-        className="mb-4 w-full cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="mx-4 mb-4 cursor-pointer rounded-lg bg-purple-600 px-8 py-5 font-bold font-mono text-2xl text-white shadow-lg transition-all hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
         onClick={() => openDrawer("new-collection")}
       >
         New Collection
