@@ -11,7 +11,7 @@ export default function OrganizePage() {
     <OrganizeFormContextProvider>
       <CollectionsProvider>
         <SongsContextProvider>
-          <div className="flex flex-1 gap-6 px-16 pb-8">
+          <div className="flex flex-1 gap-6 overflow-auto px-16 pb-8">
             <OrganizeCollections />
             <OrganizeSongs />
             <OrganizeEditor />

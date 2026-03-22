@@ -14,8 +14,6 @@ function App() {
   return (
     <DrawerProvider>
       <DownloadsProvider>
-        <ToastContainer />
-        <FullscreenDialog />
         <Router>
           <Header />
           <SongDownloadsDrawer />
@@ -26,6 +24,8 @@ function App() {
             <Route path="/organize" element={<OrganizePage />} />
           </Routes>
         </Router>
+        <ToastContainer />
+        <FullscreenDialog />
       </DownloadsProvider>
     </DrawerProvider>
   );

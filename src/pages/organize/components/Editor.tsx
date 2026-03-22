@@ -24,7 +24,6 @@ async function saveSongDetailsAction(
     const url = new URL(`${window.location.origin}/api/song/editor`);
     url.searchParams.append("collection", data.collection);
     url.searchParams.append("song", data.song);
-    url.searchParams.append("folder", data.folder);
     url.searchParams.append("title", data.title);
     url.searchParams.append("subtitle", data.subtitle ?? "");
     url.searchParams.append("artist", data.artist);
@@ -50,13 +49,16 @@ type OrganizeEditorContentProps = {
     subtitle?: string;
     genre: string;
     artist: string;
+    music: string;
   }>;
 };
 
 function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
-  use(promise);
+  const song = use(promise);
   const form = useFormContext<EditSongSchema>();
   const { refresh } = useSongsContext();
+  const selectedCollectionId = useWatch<EditSongSchema>({ name: "collection" });
+  const selectedSongId = useWatch<EditSongSchema>({ name: "song" });
 
   async function onSubmit(_: Throwable<boolean>, data: EditSongSchema) {
     const result = await saveSongDetailsAction(data);
@@ -90,65 +92,38 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
       )}
     >
       <label
-        htmlFor="folder"
+        htmlFor="song-title"
         className="mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
       >
-        Folder Name{" "}
-        <span className="text-sm">(Has no effect within the game)</span>
+        Song Title
       </label>
       <input
         type="text"
-        id="folder"
-        {...form.register("folder")}
-        placeholder="Enter the folder name..."
+        id="song-title"
+        {...form.register("title")}
+        placeholder="Enter song title..."
         className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
       />
       <ErrorMessage
         errors={form.formState.errors}
-        name="song"
+        name="title"
         render={({ message }) => (
           <p className="mt-1 text-lg text-red-600">{message}</p>
         )}
       />
-      <div className="mt-8 grid grid-cols-2 gap-8">
-        <div>
-          <label
-            htmlFor="song-title"
-            className="mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
-          >
-            Song Title
-          </label>
-          <input
-            type="text"
-            id="song-title"
-            {...form.register("title")}
-            placeholder="Enter song title..."
-            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <ErrorMessage
-            errors={form.formState.errors}
-            name="title"
-            render={({ message }) => (
-              <p className="mt-1 text-lg text-red-600">{message}</p>
-            )}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="subtitle"
-            className="mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
-          >
-            Subtitle <span className="text-sm">Optional</span>
-          </label>
-          <input
-            type="text"
-            id="subtitle"
-            {...form.register("subtitle")}
-            placeholder="Enter song subtitle..."
-            className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-      </div>
+      <label
+        htmlFor="subtitle"
+        className="mt-8 mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
+      >
+        Subtitle <span className="text-sm">Optional</span>
+      </label>
+      <input
+        type="text"
+        id="subtitle"
+        {...form.register("subtitle")}
+        placeholder="Enter song subtitle..."
+        className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+      />
       <label
         htmlFor="artist"
         className="mt-8 mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
@@ -189,6 +164,14 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
           <p className="text-lg text-red-600">{message}</p>
         )}
       />
+      <figure>
+        {/** biome-ignore lint/a11y/useMediaCaption: <explanation> */}
+        <audio
+          controls
+          className="mt-8 w-full"
+          src={`/api/audio/${encodeURIComponent(selectedCollectionId!)}/${encodeURIComponent(selectedSongId!)}/${encodeURIComponent(song.music)}`}
+        ></audio>
+      </figure>
       <div className="mt-auto pt-6">
         <button
           type="submit"

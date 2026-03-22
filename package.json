@@ -10,7 +10,7 @@
     "build:server": "node esbuild.server.config.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "nodemon --exec ts-node src/server.ts"
+    "server": "nodemon --watch \"src/server.ts\" --exec ts-node src/server.ts"
   },
   "dependencies": {
     "@hookform/error-message": "^2.0.1",

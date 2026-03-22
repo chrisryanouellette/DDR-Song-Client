@@ -1,4 +1,4 @@
-import { createWriteStream, existsSync } from "node:fs";
+import { createReadStream, createWriteStream, existsSync } from "node:fs";
 import {
   glob,
   mkdir,
@@ -7,14 +7,16 @@ import {
   rename,
   rm,
   rmdir,
+  stat,
   unlink,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
-import path from "node:path";
+import path, { dirname } from "node:path";
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 import type { ReadableStream } from "node:stream/web";
+import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
 import decompress from "decompress";
 import express, {
@@ -40,6 +42,8 @@ import type { SearchSong, Song, SongDetails, Throwable } from "./types.ts";
 const app = express();
 const port = 3000;
 const platform = os.platform();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const outfoxDirectories = {
   linux: path.resolve(os.homedir(), ".project-outfox"),
   darwin: path.resolve(os.homedir(), "/Applications/OutFox/"),
@@ -258,58 +262,63 @@ app.get<{ collection: string }, never, never, never>(
 );
 
 function getAttributeStartLocation(content: string, attr: string): number {
-  return content.indexOf(attr) + attr.length;
+  const index = content.indexOf(attr);
+  if (index === -1) return -1;
+  return index + attr.length;
 }
 
-app.get<{ collection: string; song: string }, EditSongSchema, never, never>(
-  "/api/song/editor",
-  async (req, res, next) => {
-    const parsed = getSongSchema.safeParse(req.query);
-    if (parsed.error) return next(parsed.error);
-    const dir = path.resolve(
-      outfoxSongsDir,
-      parsed.data.collection,
-      parsed.data.song,
+app.get<
+  { collection: string; song: string },
+  EditSongSchema & { music: string },
+  never,
+  never
+>("/api/song/editor", async (req, res, next) => {
+  const parsed = getSongSchema.safeParse(req.query);
+  if (parsed.error) return next(parsed.error);
+  const dir = path.resolve(
+    outfoxSongsDir,
+    parsed.data.collection,
+    parsed.data.song,
+  );
+  let filePath: string = "";
+  for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+    if (filePath.includes(".ssc")) continue;
+    filePath = entry;
+  }
+  if (!filePath) {
+    return next(
+      new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
     );
-    let filePath: string = "";
-    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
-      if (filePath.includes(".ssc")) continue;
-      filePath = entry;
-    }
-    if (!filePath) {
-      return next(
-        new Error(`Unable to find sm or ssc file for ${parsed.data.song}`),
-      );
-    }
-    const file = (await readFile(filePath)).toString();
-    const titleIndex = getAttributeStartLocation(file, "#TITLE:");
-    const title = file.slice(titleIndex, file.indexOf(";", titleIndex));
-    const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
-    const subtitle = file.slice(
-      subtitleIndex,
-      file.indexOf(";", subtitleIndex),
-    );
-    const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
-    const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
-    const genreIndex = getAttributeStartLocation(file, "#GENRE:");
-    const genre = file.slice(genreIndex, file.indexOf(";", genreIndex));
-    return res.json({
-      ...parsed.data,
-      folder: parsed.data.song,
-      title,
-      subtitle,
-      artist,
-      genre,
-    });
-  },
-);
+  }
+  const file = (await readFile(filePath)).toString();
+  const titleIndex = getAttributeStartLocation(file, "#TITLE:");
+  const title = file.slice(titleIndex, file.indexOf(";", titleIndex));
+  const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
+  const subtitle = file.slice(subtitleIndex, file.indexOf(";", subtitleIndex));
+  const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
+  const artist = file.slice(artistIndex, file.indexOf(";", artistIndex));
+  const genreIndex = getAttributeStartLocation(file, "#GENRE:");
+  const genre = genreIndex
+    ? file.slice(genreIndex, file.indexOf(";", genreIndex))
+    : "";
+  const musicIndex = getAttributeStartLocation(file, "#MUSIC:");
+  const music = file.slice(musicIndex, file.indexOf(";", musicIndex));
+  return res.json({
+    ...parsed.data,
+    title,
+    subtitle,
+    artist,
+    genre,
+    music,
+  });
+});
 
-function injectString(
-  file: string,
-  update: string,
-  start: number,
-  end: number,
-): string {
+function inject(file: string, section: string, update: string) {
+  const start = getAttributeStartLocation(file, section);
+  if (start === -1) {
+    return `${section}${update};\n${file}`;
+  }
+  const end = file.indexOf(";", start);
   return `${file.slice(0, start)}${update}${file.slice(end)}`;
 }
 
@@ -341,40 +350,16 @@ app.post<EditSongSchema, never, never, never>(
       );
     }
     let file = (await readFile(filePath)).toString();
-    const titleIndex = getAttributeStartLocation(file, "#TITLE:");
-    file = injectString(
-      file,
-      parsed.data.title,
-      titleIndex,
-      file.indexOf(";", titleIndex),
-    );
-    const subtitleIndex = getAttributeStartLocation(file, "#SUBTITLE:");
-    file = injectString(
-      file,
-      parsed.data.subtitle || "",
-      subtitleIndex,
-      file.indexOf(";", subtitleIndex),
-    );
-    const artistIndex = getAttributeStartLocation(file, "#ARTIST:");
-    file = injectString(
-      file,
-      parsed.data.artist,
-      artistIndex,
-      file.indexOf(";", artistIndex),
-    );
-    const genreIndex = getAttributeStartLocation(file, "#GENRE:");
-    file = injectString(
-      file,
-      parsed.data.genre,
-      genreIndex,
-      file.indexOf(";", genreIndex),
-    );
+    file = inject(file, "#TITLE:", parsed.data.title);
+    file = inject(file, "#SUBTITLE:", parsed.data.subtitle || "");
+    file = inject(file, "#ARTIST:", parsed.data.artist);
+    file = inject(file, "#GENRE:", parsed.data.genre);
     await writeFile(filePath, file);
-    if (parsed.data.song !== parsed.data.folder) {
+    if (parsed.data.song !== parsed.data.title) {
       const dest = path.resolve(
         outfoxSongsDir,
         parsed.data.collection,
-        parsed.data.folder,
+        parsed.data.title,
       );
       await rename(dir, dest);
     }
@@ -528,6 +513,40 @@ app.get<{ song: string; collection: string }>(
     return res.send();
   },
 );
+
+app.get("/api/audio/*rest", async (req, res) => {
+  const filePath = path.resolve(outfoxSongsDir, req.params.rest.join("/"));
+  const stats = await stat(filePath);
+  const fileSize = stats.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = end - start + 1;
+    const file = createReadStream(filePath, { start, end });
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunksize,
+      "Content-Type": "audio/mpeg",
+    });
+    file.pipe(res);
+  } else {
+    // If no range, send full file
+    res.writeHead(200, {
+      "Content-Length": fileSize,
+      "Content-Type": "audio/mpeg",
+    });
+    createReadStream(filePath).pipe(res);
+  }
+});
+
+app.use((_, res) => {
+  res.sendFile(distDir);
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _: Request, res: Response, _next: NextFunction) => {

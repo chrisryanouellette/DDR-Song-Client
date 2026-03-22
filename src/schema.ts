@@ -56,7 +56,6 @@ export type SongDownloadProgressSchema = z.infer<
 export const editSongSchema = z.object({
   collection: z.string().nonempty("Collection is required."),
   song: z.string().nonempty("Song is required."),
-  folder: z.string(),
   title: z.string().nonempty("Title is required."),
   subtitle: z.string().optional(),
   artist: z.string().nonempty("Artist is required."),

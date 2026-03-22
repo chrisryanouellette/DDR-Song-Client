@@ -160,8 +160,8 @@ export default function OrganizeSongs() {
   const isRefreshing = prom !== deferredProm;
 
   return (
-    <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 p-4 shadow-2xl backdrop-blur-sm">
-      <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase tracking-wide">
+    <div className="flex w-1/4 flex-col rounded-xl border border-slate-700 bg-slate-800/20 py-4 shadow-2xl backdrop-blur-sm">
+      <h2 className="mb-4 flex items-center px-4 font-bold text-2xl text-slate-100 uppercase tracking-wide">
         Songs
         <button
           type="button"
@@ -171,7 +171,7 @@ export default function OrganizeSongs() {
           <RiRefreshLine />
         </button>
       </h2>
-      <div className="flex flex-1 flex-col pr-2">
+      <div className="flex flex-1 flex-col overflow-auto px-4">
         {collection ? (
           <Suspense fallback={<OrganizeSongsContentFallback />}>
             <OrganizeSongsContent

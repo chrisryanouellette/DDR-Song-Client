@@ -173,7 +173,7 @@ export default function OrganizeCollections() {
       <h2 className="mb-4 flex items-center font-bold text-2xl text-slate-100 uppercase">
         Collections
       </h2>
-      <div className="flex flex-1 flex-col space-y-2 pr-2">
+      <div className="mb-8 flex flex-1 flex-col space-y-2 overflow-auto pr-2">
         <Suspense fallback={<OrganizeCollectionsContentFallback />}>
           <OrganizeCollectionsContent promise={prom} />
         </Suspense>
