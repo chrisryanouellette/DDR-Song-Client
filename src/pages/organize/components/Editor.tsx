@@ -214,7 +214,7 @@ function OrganizeEditorContent({ promise }: OrganizeEditorContentProps) {
 
   return (
     <form
-      className="flex flex-1 flex-col pr-4"
+      className="flex flex-1 flex-col overflow-auto pr-4"
       onSubmit={form.handleSubmit(
         (data) => startTransition(() => action(data)),
         console.error,

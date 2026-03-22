@@ -1,6 +1,5 @@
 import { createReadStream, createWriteStream, existsSync } from "node:fs";
 import {
-  glob,
   mkdir,
   readdir,
   readFile,
@@ -287,10 +286,12 @@ app.get<GetSongApiSchema, EditSongApiResponse>(
       parsed.data.collection,
       parsed.data.song,
     );
+
     let filePath: string = "";
-    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+    for (const entry of await readdir(dir)) {
+      if (!entry.endsWith(".sm") && !entry.endsWith(".ssc")) continue;
       if (filePath.includes(".ssc")) continue;
-      filePath = entry;
+      filePath = path.resolve(dir, entry);
     }
     if (!filePath) {
       return next(
@@ -399,9 +400,10 @@ app.post<EditSongSchema, never, never, never>(
       parsed.data.song,
     );
     let filePath: string = "";
-    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+    for (const entry of await readdir(dir)) {
+      if (!entry.endsWith(".sm") && !entry.endsWith(".ssc")) continue;
       if (filePath.includes(".ssc")) continue;
-      filePath = entry;
+      filePath = path.resolve(dir, entry);
     }
     if (!filePath) {
       return next(
@@ -464,9 +466,10 @@ app.get<UpdateAudioSchema>(
       parsed.data.song,
     );
     let filePath: string = "";
-    for await (const entry of glob(`${dir}/**/*(*.sm|*.ssc)`)) {
+    for (const entry of await readdir(dir)) {
+      if (!entry.endsWith(".sm") && !entry.endsWith(".ssc")) continue;
       if (filePath.includes(".ssc")) continue;
-      filePath = entry;
+      filePath = path.resolve(dir, entry);
     }
     if (!filePath) {
       return next(

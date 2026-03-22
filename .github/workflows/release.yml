@@ -32,14 +32,14 @@ jobs:
         run: |
           mkdir -p build
           cp -r dist/* build/
-          zip -r build.zip build/
+          zip -r DDR-Song-Client.zip build/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Release ${{ github.run_number }}
-          files: build.zip
+          files: DDR-Song-Client.zip
           body: |
             Automated release generated from push to main.
           draft: false
