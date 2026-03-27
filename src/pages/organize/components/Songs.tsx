@@ -97,8 +97,9 @@ function OrganizeSongsContent({
   isRefreshing,
 }: OrganizeSongsContentProps) {
   const result = use(promise);
-  const form = useFormContext();
-  const selectedSongId = useWatch({ name: "song" });
+  const form = useFormContext<EditSongSchema>();
+  const selectedSongId = useWatch<EditSongSchema>({ name: "song" });
+  const search = useWatch<EditSongSchema>({ name: "search" });
 
   function handleSelectSong(name: string) {
     form.setValue("song", name);
@@ -112,43 +113,74 @@ function OrganizeSongsContent({
 
   if (!result?.songs) return <OrganizeSongsContentFallback />;
   const { songs } = result;
+  const filtered = search
+    ? songs.filter(({ name }) =>
+        name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : songs;
 
   return (
-    <div
-      className={cn(
-        "flex flex-1 flex-col space-y-2 transition-opacity duration-300",
-        isRefreshing ? "opacity-40" : "opacity-100",
-      )}
-    >
-      {songs.length ? (
-        songs.map(({ name }) => (
-          <button
-            key={name}
-            type="button"
-            draggable
-            onDragStart={(e) => handleDragStart(e, name)}
-            onClick={() => handleSelectSong(name)}
-            className={cn(
-              "flex w-full cursor-grab items-center rounded-lg px-4 py-3 text-left font-bold font-mono text-2xl transition-all active:cursor-grabbing",
-              selectedSongId === name
-                ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
-                : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
-            )}
-          >
-            {name}
-            {selectedSongId === name ? (
-              <OrganizeSongDeleteSongButton song={name} />
-            ) : null}
-          </button>
-        ))
-      ) : (
-        <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
-          <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
-            <RiMistLine className="size-32" />
+    <div className="flex flex-1 flex-col overflow-auto">
+      <div
+        className={cn(
+          "flex flex-1 flex-col space-y-2 overflow-auto px-4 transition-opacity duration-300",
+          isRefreshing ? "opacity-40" : "opacity-100",
+        )}
+      >
+        {songs.length ? (
+          filtered.length ? (
+            filtered.map(({ name }) => (
+              <button
+                key={name}
+                type="button"
+                draggable
+                onDragStart={(e) => handleDragStart(e, name)}
+                onClick={() => handleSelectSong(name)}
+                className={cn(
+                  "flex w-full cursor-grab items-center rounded-lg px-4 py-3 text-left font-bold font-mono text-2xl transition-all active:cursor-grabbing",
+                  selectedSongId === name
+                    ? "scale-[1.02] bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                    : "bg-slate-800/40 text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+                )}
+              >
+                {name}
+                {selectedSongId === name ? (
+                  <OrganizeSongDeleteSongButton song={name} />
+                ) : null}
+              </button>
+            ))
+          ) : (
+            <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
+              <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
+                <RiMistLine className="size-32" />
+              </div>
+              <p> No songs found from search.</p>
+            </div>
+          )
+        ) : (
+          <div className="my-auto flex flex-1 flex-col items-center justify-center space-y-4 text-slate-500 italic">
+            <div className="rounded-full bg-slate-800/40 p-8 text-slate-400 opacity-50">
+              <RiMistLine className="size-32" />
+            </div>
+            <p> No songs in this collection</p>
           </div>
-          <p> No songs in this collection</p>
-        </div>
-      )}
+        )}
+      </div>
+      <form className="mt-auto mb-4 px-4">
+        <label
+          htmlFor="search"
+          className="mt-4 mb-3 block font-bold text-2xl text-slate-400 uppercase tracking-widest"
+        >
+          Search
+        </label>
+        <input
+          {...form.register("search")}
+          type="text"
+          id="search"
+          placeholder="Enter song title..."
+          className="w-full rounded-lg border border-slate-600 bg-slate-800/40 px-5 py-4 text-3xl text-white placeholder-slate-500 transition-all focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+      </form>
     </div>
   );
 }
@@ -171,7 +203,7 @@ export default function OrganizeSongs() {
           <RiRefreshLine />
         </button>
       </h2>
-      <div className="flex flex-1 flex-col overflow-auto px-4">
+      <div className="flex flex-1 flex-col overflow-auto">
         {collection ? (
           <Suspense fallback={<OrganizeSongsContentFallback />}>
             <OrganizeSongsContent

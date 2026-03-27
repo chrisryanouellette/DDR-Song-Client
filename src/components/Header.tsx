@@ -6,7 +6,7 @@ import { cn } from "../utils";
 
 function Header() {
   const { openDrawer } = useDrawer();
-  const downloads = useSongDownloadsContext();
+  const { downloads } = useSongDownloadsContext();
   const isDownloading = !!Object.values(downloads).filter(
     (data) => "progress" in data,
   ).length;

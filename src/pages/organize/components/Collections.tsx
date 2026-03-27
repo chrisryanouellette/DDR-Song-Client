@@ -140,6 +140,7 @@ function OrganizeCollectionsContent({
       onClick={() => {
         form.setValue("collection", name);
         form.setValue("song", "");
+        form.setValue("search", "");
       }}
       onDragOver={(e) => handleDragOver(e, name)}
       onDragLeave={handleDragLeave}

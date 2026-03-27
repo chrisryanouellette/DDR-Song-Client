@@ -80,6 +80,7 @@ export const editSongSchema = z.object({
   subtitle: z.string().optional(),
   artist: z.string().nonempty("Artist is required."),
   genre: z.string().nonempty("Genre is required."),
+  search: z.string().optional(),
 });
 
 export type EditSongSchema = z.infer<typeof editSongSchema>;
